@@ -1,0 +1,18 @@
+Welcome to the README for MC Server GUI
+
+This project is in it's infancy still and I'm also still learning how to use GIT, so please bear with me.
+
+This was built in Windows 7 Ultimate with autohotkey.
+My guess is that it will work fine for XP/2000/Vista/7 but I can't garauntee it'll work on other OS.
+
+
+
+Installation is pretty simple:
+1. Place mcservergui.exe in the same folder as the guiconfig.ini.
+    (I recommend just putting them both in your minecraft server folder.)
+2. Edit guiconfig.ini and most importantly change the settings under [Folders]
+3. Change the other settings as you see fit.
+
+That's it!
+
+Run the exe and enjoy.
