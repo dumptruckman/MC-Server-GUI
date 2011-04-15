@@ -8,11 +8,11 @@ My guess is that it will work fine for XP/2000/Vista/7 but I can't garauntee it'
 
 
 Installation is pretty simple:
-1. Place mcservergui.exe in the same folder as the guiconfig.ini.
+1. Unzip mcservergui.exe somewhere
     (I recommend just putting them both in your minecraft server folder.)
-2. Edit guiconfig.ini and most importantly change the settings under [Folders]
-3. Change the other settings as you see fit.
+2. Run mcservergui.exe and click on GUI Config
+3. Modify these settings to your needs.
+4. Most importantly, Server Arguments is what you would put after java.exe to run your server
+  example: Xms1024M -Xmx1024M -jar craftbukkit-0.0.1-SNAPSHOT.jar
 
 That's it!
-
-Run the exe and enjoy.
