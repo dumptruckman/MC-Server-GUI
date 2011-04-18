@@ -22,7 +22,7 @@ IniRead, UpdateRate, guiconfig.ini, Timing, UpdateRate, 250
 
 ;Config GUI
 
-Gui, Add, Tab2, w900 Buttons gGUIUpdate vLastTab, Main Window||GUI Config
+Gui, Add, Tab2, w900 Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
 
 Gui, Tab, Main Window
@@ -42,25 +42,48 @@ Gui, Add, Text, yp xp+200 w300 vServerMemUse, Memory Usage: NA
 Gui, Add, Text, yp xp+350 w100 vServerStatus cRed Bold, Not Running
 
 
+Gui, Tab, Server Config
+
+Gui, Add, GroupBox, x10 y30 w300 h230, Server Arguments
+Gui, Add, Text, x20 y53, Server Jar File: 
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vMCServerJar, %MCServerJar%
+Gui, Add, Button, xp+150 yp-2 gMCServerJarBrowse, Browse
+Gui, Add, Text, x20 yp+40, Xmx Memory: 
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vServerXmx, %ServerXmx%
+Gui, Add, Text, x20 yp+25, Xms Memory: 
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vServerXms, %ServerXms%
+Gui, Add, CheckBox, x20 yp+25 vUseConcMarkSweepGC, -XX:+UseConcMarkSweepGC
+GuiControl,, UseConcMarkSweepGC, %UseConcMarkSweepGC%
+Gui, Add, CheckBox, x20 yp+18 vUseParNewGC, -XX:+UseParNewGC
+GuiControl,, UseParNewGC, %UseParNewGC%
+Gui, Add, CheckBox, x20 yp+18 vCMSIncrementalPacing, -XX:+CMSIncrementalPacing
+GuiControl,, CMSIncrementalPacing, %CMSIncrementalPacing%
+Gui, Add, CheckBox, x20 yp+18 vAggressiveOpts, -XX:+AggressiveOpts
+GuiControl,, AggressiveOpts, %AggressiveOpts%
+Gui, Add, Text, x20 yp+20, ParallelGCThreads:
+Gui, Add, Edit, xp+91 yp-3 w30 number -wrap -multi vParallelGCThreads, %ParallelGCThreads%
+Gui, Add, Text, x20 yp+27, Extra Arguments:
+Gui, Add, Edit, xp+91 yp-3 w190 -wrap -multi vExtraRunArguments, %ExtraRunArguments%
+
+
 Gui, Tab, GUI Config
 
 Gui, Add, GroupBox, x10 y30 w300 h140, Folders/Executable
 Gui, Add, Text, x20 y53, MC Server Path: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap vMCServerPath, %MCServerPath%
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vMCServerPath, %MCServerPath%
 Gui, Add, Button, xp+150 yp-2 gMCServerPathBrowse, Browse
-Gui, Add, Text, x20 yp+30, MC Backup Path: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap vMCBackupPath, %MCBackupPath%
+Gui, Add, Text, x20 yp+40, MC Backup Path: 
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vMCBackupPath, %MCBackupPath%
 Gui, Add, Button, xp+150 yp-2 gMCBackupPathBrowse, Browse
-Gui, Add, Text, x20 yp+30, Java Executable: 
-Gui, Add, Edit, xp+85 yp-3 w200 -wrap vJavaExec, %JavaExec%
-Gui, Add, Text, x20 yp+30, Server Arguments: 
-Gui, Add, Edit, xp+85 yp-3 w200 vMCServerArgs, %MCServerArgs%
+Gui, Add, Text, x20 yp+40, Java Executable: 
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vJavaExec, %JavaExec%
+Gui, Add, Button, xp+150 yp-2 gJavaExecutableBrowse, Browse
 
-Gui, Add, Text, x20 yp+50, GUI Window Title:
+Gui, Add, Text, x20 yp+60, GUI Window Title:
 Gui, Add, Edit, xp+90 yp-3 w195 vWindowTitle, %WindowTitle%
 
 Gui, Add, Text, x20 yp+27, Update Rate: 
-Gui, Add, Edit, xp+70 yp-3 w215 vUpdateRate, %UpdateRate%
+Gui, Add, Edit, xp+70 yp-3 w215 number vUpdateRate, %UpdateRate%
 Gui, Add, Text, x20 yp+22, (How often the console window is refreshed in miliseconds)
 
 Gui, Add, Text, x20 yp+150 cRed, Once changes are complete, simply click on Main Window to save.
@@ -70,9 +93,9 @@ Gui, Add, CheckBox, x322 y53 vWorldBackups, Run World Backups
 GuiControl,, WorldBackups, %WorldBackups%
 Gui, Add, CheckBox, x322 yp+20 vLogBackups, Run Log Backups (Highly Recommended)
 GuiControl,, LogBackups, %LogBackups%
-Gui, Add, Text, x322 yp+30, Number of Worlds:
-Gui, Add, Edit, xp+90 yp-3 w30 number -wrap vNumWorlds, %NumWorlds%
-Gui, Add, Text, x322 yp+23, Please set up your worlds in guiconfig.ini`nIt will be in the same directory as this program`nEnter each world in the following format:`nWorldN=worldname`nWhere N is the number for the world and worldname is `nthe name of the folder the world is stored in.`nExample:`nWorld1=world`nWorld2=nether`nWorld3=whathaveyou`netc..
+Gui, Add, Text, x322 yp+20, Enter names of worlds below:`n  (separate each one with a comma and NO spaces)
+Gui, Add, Edit, x322 yp+35 w200 -multi vWorldList, %WorldList%
+;Gui, Add, Text, x322 yp+23, Please set up your worlds in guiconfig.ini`nIt will be in the same directory as this program`nEnter each world in the following format:`nWorldN=worldname`nWhere N is the number for the world and worldname is `nthe name of the folder the world is stored in.`nExample:`nWorld1=world`nWorld2=nether`nWorld3=whathaveyou`netc..
 
 Gui, Show, Restore, %WindowTitle%
 
@@ -134,13 +157,25 @@ InitializeConfig()
   MCServerPath := GetConfigKey("Folders", "ServerPath", GUIPATH)
   MCBackupPath := GetConfigKey("Folders", "BackupPath", GUIPATH . "\backup")
   JavaExec := GetConfigKey("Exec", "JavaExec", "java.exe")
-  MCServerArgs := GetConfigKey("Exec", "MCServerArguments", "Set this")
+  MCServerJar := GetConfigKey("ServerArguments", "ServerJarFile", "Set this")
+  ServerXmx := GetConfigKey("ServerArguments", "Xmx", "1024M")
+  ServerXms := GetConfigKey("ServerArguments", "Xms", "1024M")
+  UseConcMarkSweepGC := GetConfigKey("ServerArguments", "UseConcMarkSweepGC", "0")
+  UseParNewGC := GetConfigKey("ServerArguments", "UseParNewGC", "0")
+  CMSIncrementalPacing := GetConfigKey("ServerArguments", "CMSIncrementalPacing", "0")
+  AggressiveOpts := GetConfigKey("ServerArguments", "AggressiveOpts", "0")
+  ParallelGCThreads := GetConfigKey("ServerArguments", "ParallelGCThreads", "")
+  ExtraRunArguments := GetConfigKey("ServerArguments", "Extra", "")
   WindowTitle := GetConfigKey("Names", "GUIWindowTitle", "MC Server GUI")
   UpdateRate := GetConfigKey("Timing", "UpdateRate", "250")
   WorldBackups := GetConfigKey("Backups", "RunWorldBackups", "1")
   LogBackups := GetConfigKey("Backups", "RunLogBackups", "1")
-  NumWorlds := GetConfigKey("Worlds", "Amount", "1")
-  GetConfigKey("Worlds", "World1", "world")
+  WorldList := ReadWorlds()
+  If (WorldList = "ERROR")
+  {
+    WriteWorlds("world")
+    WorldList := "world"
+  }
 }
 
 
@@ -173,6 +208,89 @@ SetConfigKey(Category, Key, Value)
   SetWorkingDir, %GUIPATH%
   IniWrite, %Value%, guiconfig.ini, %Category%, %Key%
   SetWorkingDir, %TEMP%
+}
+
+
+ReadWorlds()        ;Returns all worlds in the config, one per line
+{
+  Global GUIPATH
+  Worlds := ""
+  
+  loop
+  {
+    WorldIndex := "World" . A_Index
+    IniRead, WorldName, %GUIPATH%\guiconfig.ini, Worlds, %WorldIndex%
+    If (WorldName = "ERROR")
+    {
+      If (A_Index = 1)
+      {
+        return "ERROR"
+      }
+      break
+    }
+    Worlds := Worlds . WorldName . ","
+  }
+  Return Worlds
+}
+
+
+WriteWorlds(Worlds)
+{
+  Global GUIPATH
+  
+  Loop, Parse, Worlds, `,
+  {
+    If (A_LoopField != "")
+    {
+      WorldIndex := "World" . A_Index
+      IniWrite, %A_LoopField%, %GUIPATH%\guiconfig.ini, Worlds, %WorldIndex%
+    }
+  }
+}
+
+
+BuildRunLine()
+{
+  Global JavaExec
+  Global MCServerJar
+  Global ServerXmx
+  Global ServerXms
+  Global UseConcMarkSweepGC
+  Global UseParNewGC
+  Global CMSIncrementalPacing
+  Global AggressiveOpts
+  Global ParallelGCThreads
+  Global ExtraRunArguments
+  
+  ServerArgs := "-Xmx" . ServerXmx . " -Xms" . ServerXms
+  If (UseConcMarkSweepGC)
+  {
+    ServerArgs := ServerArgs . " -XX:+UseConcMarkSweepGC"
+  }
+  If (UseParNewGC)
+  {
+    ServerArgs := ServerArgs . " -XX:+UseParNewGC"
+  }
+  If (CMSIncrementalPacing)
+  {
+    ServerArgs := ServerArgs . " -XX:+CMSIncrementalPacing"
+  }
+  If (AggressiveOpts)
+  {
+    ServerArgs := ServerArgs . " -XX:+AggressiveOpts"
+  }
+  If (ParallelGCThreads != "")
+  {
+    ServerArgs := ServerArgs . " -XX:ParallelGCThreads=" . ParallelGCThreads
+  }
+  If (ExtraRunArguments != "")
+  {
+    ServerArgs := ServerArgs . " " . ExtraRunArguments
+  }
+  ServerArgs := ServerArgs . " -jar " . MCServerJar . " nogui"
+  
+  RunLine := JavaExec . A_Space . ServerArgs
+  return RunLine
 }
 
 
@@ -217,10 +335,10 @@ MainProcess()
 StartServer()
 {
   Global ServerWindowPID
-  Global MCServerArgs
+  Global MCServerJar
   Global JavaExec
   
-  if (MCServerArgs != "Set this")
+  if (MCServerJar != "Set this")
   {
     ErrorLevel = 0
     Process, Exist, %ServerWindowPID%
@@ -232,15 +350,18 @@ StartServer()
     else
     {
       SetWorkingDir, %MCServerPath%
+      GuiControl,, ConsoleBox, 
       InitializeVariables()
       Global MCServerPath
-      Run, %JavaExec% %MCServerArgs%, %MCServerPath%, Hide, PID
+      
+      RunThis := BuildRunLine()
+      Run, %RunThis%, %MCServerPath%, Hide, PID
       return PID
     }
   }
   else
   {
-    GuiControl,, ConsoleBox, Please take a look at the GUI Configuration...  You must specify the path of the MC Server executable
+    GuiControl,, ConsoleBox, Please take a look at the Server Configuration...  You must specify the MC Server Jar file.
     return 0
   }
 }
@@ -285,35 +406,25 @@ SendServer(ByRef textline = "")
 Backup()
 {
   Global LogBackups
-  if (LogBackups = "1")
+  Global WorldBackups 
+  
+  if (LogBackups = "1")     ;Runs log backups if suppose to
   {
     BackupLog()
-  }
-  Global WorldBackups
-  if (WorldBackups = "1")
+  } 
+  
+  if (WorldBackups = "1")   ;Runs world backups if suppose to
   {
-    Global NumWorlds
-    Global GUIPath
-    WorkingOn = 1
-    loop
+    Global WorldList
+    
+    WorkingOn = 1           ;Loop index
+    Loop, Parse, WorldList, `,
     {
-      World := "World" . WorkingOn
-      IniRead, WorldName, %GUIPath%\guiconfig.ini, Worlds, %World%, world
-      BackupWorld(WorldName)
-      if (NumWorlds = WorkingOn)
+      If (A_LoopField != "")
       {
-        break
+        BackupWorld(A_LoopField)
       }
-      WorkingOn := WorkingOn + 1
     }
-  }
-  if (WorldBackups = "1" or LogBackups = "1")
-  {
-    GuiControl,, ConsoleBox, Server backed up successfully.
-  }
-  else
-  {
-    GuiControl,, ConsoleBox, 
   }
 }
 
@@ -322,11 +433,18 @@ BackupWorld(world = "world")
 {
   Global MCServerPath
   Global MCBackupPath
+  
 	SetWorkingDir, %MCServerPath%
   FileGetTime, filetime, %MCServerPath%\%world%
-  FormatTime, newfiletime, filetime, yyyyMMddHHmm
+  FormatTime, newfiletime, filetime, yyyyMMddHHmmss
+  newfiletime := substr(newfiletime, 1, 4) . "-" . substr(newfiletime, 5, 2) . "-" . substr(newfiletime, 7, 2) . " " . substr(newfiletime, 9, 2) . "." . substr(newfiletime, 11, 2) . "." . substr(newfiletime, 13, 2)
   filename = %MCBackupPath%\%world%%newfiletime%
   FileCopyDir, %MCServerPath%\%world%, %filename%
+  IfExist, %filename%
+  {
+    GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
+    GuiControl,, ConsoleBox, %world% backed up successfully.`n`r%OldConsole%
+  }
 }
 
 
@@ -334,13 +452,20 @@ BackupLog()
 {
   Global MCServerPath
   Global MCBackupPath
+  
 	SetWorkingDir, %MCServerPath%
   FileGetTime, filetime, %MCServerPath%\server.log
-  FormatTime, newfiletime, filetime, yyyyMMddHHmm
-  filename = %MCBackupPath%\server.log%newfiletime%
+  FormatTime, newfiletime, filetime, yyyyMMddHHmmss
+  newfiletime := substr(newfiletime, 1, 4) . "-" . substr(newfiletime, 5, 2) . "-" . substr(newfiletime, 7, 2) . " " . substr(newfiletime, 9, 2) . "." . substr(newfiletime, 11, 2) . "." . substr(newfiletime, 13, 2)
+  filename = %MCBackupPath%\%newfiletime%.log
   FileCopy, %MCServerPath%\server.log, %filename%
   FileDelete, %MCServerPath%\server.log
   FileAppend, ,%MCServerPath%\server.log
+  IfExist, %filename%
+  {
+    GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
+    GuiControl,, ConsoleBox, server.log backed up successfully.`n`r%OldConsole%
+  }
 }
 
 
@@ -364,50 +489,50 @@ GetLog()
 
 
 GetProcessMemory_PeakWorkingSet(ProcID, Units="K") {
-    Process, Exist, %ProcID%
-    pid := Errorlevel
+  Process, Exist, %ProcID%
+  pid := Errorlevel
 
-    ; get process handle
-    hProcess := DllCall( "OpenProcess", UInt, 0x10|0x400, Int, false, UInt, pid )
+  ; get process handle
+  hProcess := DllCall( "OpenProcess", UInt, 0x10|0x400, Int, false, UInt, pid )
 
-    ; get memory info
-    PROCESS_MEMORY_COUNTERS_EX := VarSetCapacity(memCounters, 44, 0)
-    DllCall( "psapi.dll\GetProcessMemoryInfo", UInt, hProcess, UInt, &memCounters, UInt, PROCESS_MEMORY_COUNTERS_EX )
-    DllCall( "CloseHandle", UInt, hProcess )
+  ; get memory info
+  PROCESS_MEMORY_COUNTERS_EX := VarSetCapacity(memCounters, 44, 0)
+  DllCall( "psapi.dll\GetProcessMemoryInfo", UInt, hProcess, UInt, &memCounters, UInt, PROCESS_MEMORY_COUNTERS_EX )
+  DllCall( "CloseHandle", UInt, hProcess )
 
-    SetFormat, Float, 0.0 ; round up K
+  SetFormat, Float, 0.0 ; round up K
 
-    PrivateBytes := NumGet(memCounters, 8, "UInt")
-    if (Units == "B")
-        return PrivateBytes
-    if (Units == "K")
-        Return PrivateBytes / 1024
-    if (Units == "M")
-        Return PrivateBytes / 1024 / 1024
+  PrivateBytes := NumGet(memCounters, 8, "UInt")
+  if (Units == "B")
+      return PrivateBytes
+  if (Units == "K")
+      Return PrivateBytes / 1024
+  if (Units == "M")
+      Return PrivateBytes / 1024 / 1024
 }
 
 
 GetProcessMemory_WorkingSet(ProcID, Units="K") {
-    Process, Exist, %ProcID%
-    pid := Errorlevel
+  Process, Exist, %ProcID%
+  pid := Errorlevel
 
-    ; get process handle
-    hProcess := DllCall( "OpenProcess", UInt, 0x10|0x400, Int, false, UInt, pid )
+  ; get process handle
+  hProcess := DllCall( "OpenProcess", UInt, 0x10|0x400, Int, false, UInt, pid )
 
-    ; get memory info
-    PROCESS_MEMORY_COUNTERS_EX := VarSetCapacity(memCounters, 44, 0)
-    DllCall( "psapi.dll\GetProcessMemoryInfo", UInt, hProcess, UInt, &memCounters, UInt, PROCESS_MEMORY_COUNTERS_EX )
-    DllCall( "CloseHandle", UInt, hProcess )
+  ; get memory info
+  PROCESS_MEMORY_COUNTERS_EX := VarSetCapacity(memCounters, 44, 0)
+  DllCall( "psapi.dll\GetProcessMemoryInfo", UInt, hProcess, UInt, &memCounters, UInt, PROCESS_MEMORY_COUNTERS_EX )
+  DllCall( "CloseHandle", UInt, hProcess )
 
-    SetFormat, Float, 0.0 ; round up K
+  SetFormat, Float, 0.0 ; round up K
 
-    PrivateBytes := NumGet(memCounters, 12, "UInt")
-    if (Units == "B")
-        return PrivateBytes
-    if (Units == "K")
-        Return PrivateBytes / 1024
-    if (Units == "M")
-        Return PrivateBytes / 1024 / 1024
+  PrivateBytes := NumGet(memCounters, 12, "UInt")
+  if (Units == "B")
+      return PrivateBytes
+  if (Units == "K")
+      Return PrivateBytes / 1024
+  if (Units == "M")
+      Return PrivateBytes / 1024 / 1024
 }
 
 
@@ -463,9 +588,20 @@ MCBackupPathBrowse:
 return
 
 
+JavaExecutableBrowse:
+  FileSelectFile, JavaExec,, %A_ComputerName%, Select your java executable or just close this and type java.exe in the box, *.exe
+  GuiControl,, JavaExec, %JavaExec%
+return
+
+McServerJarBrowse:
+  FileSelectFile, MCServerJar,, %MCServerPath%, Select the .jar file for your server. craftbukkit.jar for example, *.jar
+  GuiControl,, MCServerJar, %MCServerJar%
+return
+
+
 GUIUpdate:
-  GuiControlGet, LastTab,, LastTab
-  if (LastTab = "GUI Config")
+  GuiControlGet, ThisTab,, ThisTab
+  if (ThisTab = "GUI Config")
   {
     MCServerPath := GetConfigKey("Folders", "ServerPath") 
     GuiControl,, MCServerPath, %MCServerPath%
@@ -490,11 +626,11 @@ GUIUpdate:
 
     LogBackups := GetConfigKey("Backups", "RunLogBackups")
     GuiControl,, LogBackups, %LogBackups%
-
-    NumWorlds := GetConfigKey("Worlds", "Amount")
-    GuiControl,, NumWorlds, %NumWorlds%
+    
+    WorldList := ReadWorlds()
+    GuiControl,, WorldList, %WorldList%
   }
-  if (LastTab = "Main Window")
+  if (ThisTab != "GUI Config")
   {
     GuiControlGet, MCServerPath,, MCServerPath
     SetConfigKey("Folders", "ServerPath", MCServerPath) 
@@ -521,9 +657,68 @@ GUIUpdate:
  
     GuiControlGet, LogBackups,, LogBackups
     SetConfigKey("Backups", "RunLogBackups", LogBackups)
+    
+    GuiControlGet, WorldList,, WorldList
+    WriteWorlds(WorldList)
+  }
   
-    GuiControlGet, NumWorlds,, NumWorlds
-    SetConfigKey("Worlds", "Amount", NumWorlds)
+  If (ThisTab = "Server Config")
+  {
+    MCServerJar := GetConfigKey("ServerArguments", "ServerJarFile") 
+    GuiControl,, MCServerJar, %MCServerJar%
+    
+    ServerXmx := GetConfigKey("ServerArguments", "Xmx") 
+    GuiControl,, ServerXmx, %ServerXmx%
+    
+    ServerXms := GetConfigKey("ServerArguments", "Xms") 
+    GuiControl,, ServerXms, %ServerXms%
+    
+    UseConcMarkSweepGC := GetConfigKey("ServerArguments", "UseConcMarkSweepGC")
+    GuiControl,, UseConcMarkSweepGC, %UseConcMarkSweepGC%
+    
+    UseParNewGC := GetConfigKey("ServerArguments", "UseParNewGC")
+    GuiControl,, UseParNewGC, %UseParNewGC%
+    
+    CMSIncrementalPacing := GetConfigKey("ServerArguments", "CMSIncrementalPacing")
+    GuiControl,, CMSIncrementalPacing, %CMSIncrementalPacing%
+    
+    AggressiveOpts := GetConfigKey("ServerArguments", "AggressiveOpts")
+    GuiControl,, AggressiveOpts, %AggressiveOpts%
+    
+    ParallelGCThreads := GetConfigKey("ServerArguments", "ParallelGCThreads")
+    GuiControl,, ParallelGCThreads, %ParallelGCThreads%
+    
+    ExtraRunArguments := GetConfigKey("ServerArguments", "Extra")
+    GuiControl,, ExtraRunArguments, %ExtraRunArguments%
+  }
+  If (ThisTab != "Server Config")
+  {
+    GuiControlGet, MCServerJar,, MCServerJar
+    SetConfigKey("ServerArguments", "ServerJarFile", MCServerJar)
+    
+    GuiControlGet, ServerXmx,, ServerXmx
+    SetConfigKey("ServerArguments", "Xmx", ServerXmx)
+    
+    GuiControlGet, ServerXms,, ServerXms
+    SetConfigKey("ServerArguments", "Xms", ServerXms)
+    
+    GuiControlGet, UseConcMarkSweepGC,, UseConcMarkSweepGC
+    SetConfigKey("ServerArguments", "UseConcMarkSweepGC", UseConcMarkSweepGC)
+    
+    GuiControlGet, UseParNewGC,, UseParNewGC
+    SetConfigKey("ServerArguments", "UseParNewGC", UseParNewGC)
+    
+    GuiControlGet, CMSIncrementalPacing,, CMSIncrementalPacing
+    SetConfigKey("ServerArguments", "CMSIncrementalPacing", CMSIncrementalPacing)
+    
+    GuiControlGet, AggressiveOpts,, AggressiveOpts
+    SetConfigKey("ServerArguments", "AggressiveOpts", AggressiveOpts)
+    
+    GuiControlGet, ParallelGCThreads,, ParallelGCThreads
+    SetConfigKey("ServerArguments", "ParallelGCThreads", ParallelGCThreads)
+    
+    GuiControlGet, ExtraRunArguments,, ExtraRunArguments
+    SetConfigKey("ServerArguments", "Extra", ExtraRunArguments)
   }
 return
 

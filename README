@@ -10,9 +10,7 @@ My guess is that it will work fine for XP/2000/Vista/7 but I can't garauntee it'
 Installation is pretty simple:
 1. Unzip mcservergui.exe somewhere
     (I recommend just putting them both in your minecraft server folder.)
-2. Run mcservergui.exe and click on GUI Config
-3. Modify these settings to your needs.
-4. Most importantly, Server Arguments is what you would put after java.exe to run your server
-  example: Xms1024M -Xmx1024M -jar craftbukkit-0.0.1-SNAPSHOT.jar
+2. Run mcservergui.exe and click on Server Config
+3. Modify these settings to your needs but most importantly locate your MC Server Jar file
 
 That's it!

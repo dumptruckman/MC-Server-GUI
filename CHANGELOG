@@ -1,0 +1,21 @@
+Version .2.1
+  Removed some guiconfig.ini keys and added new ones
+  Now configure worlds within the GUI
+  Added new Icon
+  Reformatted backup filename formats to be more readable
+  Added more GUI options for the server run time configuration, hopefully easing the configuration process
+  This is a usability update mostly
+
+Version 0.2.0
+  Major overhaul to code structure... Getting it ready for scheduled backups
+  Runs straight java now without going through cmd.exe
+  Creates config file automatically
+  Allows editing of config inside of GUI
+  Temporarily removed both restart options due to strange bugs 
+  No more lag on the text entry box clearing
+  Added some slight coloration, more to come
+  Added memory stats (current memory/peak memory)
+  Window Title actually changes now
+  
+Version 0.1.0
+  Initial Release!
