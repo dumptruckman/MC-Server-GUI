@@ -4,7 +4,6 @@ InitializeVariables()
 
 ;Initialize AHK Config
 DetectHiddenWindows, On
-#NoEnv
 
 ;Initialize GUI Config Globals
 GUIPATH = %A_WorkingDir%
@@ -106,6 +105,7 @@ Gui, Add, Text, x322 yp+30, Enter the times, at which automated restarts will wa
 Gui, Add, Edit, x322 yp+45 w280 -multi vWarningTimes, %WarningTimes%
 Gui, Add, Text, x322 yp+30, Amount of time to tell players to wait to reconnect:`n (This will be added to the current warning's time)`n (In seconds)
 Gui, Add, Edit, xp+235 yp-3 w30 number -multi vTimeToReconnect, %TimeToReconnect%
+;Debugging: Gui, Add, Edit, x322 yp+40 w40 vServerWindowPID, %ServerWindowPID%
 
 Gui, Show, Restore, %WindowTitle%
 
@@ -134,12 +134,10 @@ RestartScheduler:
 return
 
 
-ServerStop:
-  ErrorLevel = 0
-  Process, Exist, %ServerWindowPID%
-  If ( ! ErrorLevel )
+ServerStopTimer:
+  If (!ServerIsRunning())
   {
-    SetTimer, ServerStop, Off
+    SetTimer, ServerStopTimer, Off
     ServerWindowPID = 0
     GuiControl, Enable, ServerProperties
     GuiControl,, ServerStatus, Not Running
@@ -148,14 +146,12 @@ ServerStop:
 return
 
 WaitForRestartTimer:
-  ErrorLevel = 0
-  Process, Exist, %ServerWindowPID%
-  If ( ! ErrorLevel )
+  If (!ServerIsRunning())
   {
     If (!IsBackingUp)
     {
       SetTimer, WaitForRestartTimer, Off
-      ServerWindowPID := StartServer()
+      StartServer()
     }
   }
 return
@@ -376,7 +372,7 @@ BuildRunLine()
   {
     ServerArgs := ServerArgs . " " . ExtraRunArguments
   }
-  ServerArgs := ServerArgs . " -jar " . MCServerJar . " nogui"
+  ServerArgs := ServerArgs . " -jar " . MCServerJar ;. " nogui"
   
   RunLine := JavaExec . A_Space . ServerArgs
   return RunLine
@@ -428,37 +424,46 @@ ServerIsRunning()
 }
 
 
-;Runs the server and returns the PID
+SetServerStartTime()
+{
+  Global ServerStartDate
+  Global ServerStartTime
+  
+  ServerStartDate := A_YYYY . "-" . A_MM . "-" . A_DD
+  ServerStartTime := A_Hour . ":" . A_Min . ":" . A_Sec
+}
+
+
+;Runs the server and sets ServerWindowPID
 StartServer()
 {
-  Global ServerWindowPID
   Global MCServerJar
-  Global JavaExec
   
   if (MCServerJar != "Set this")
   {
     If (ServerIsRunning())
     {
       MsgBox, Server is already running!
-      return ServerWindowPID
     }
     else
     {
+      Global MCServerPath
+      Global ServerWindowPID
+      
       SetWorkingDir, %MCServerPath%
       GuiControl,, ConsoleBox, 
       InitializeVariables()
-      Global MCServerPath
       
       GuiControl, Disable, ServerProperties
       RunThis := BuildRunLine()
-      Run, %RunThis%, %MCServerPath%, Hide, PID
-      return PID
+      SetServerStartTime()
+      Run, %RunThis%, %MCServerPath%, , ServerWindowPID
+      ;InitializeLog()
     }
   }
   else
   {
     GuiControl,, ConsoleBox, Please take a look at the Server Configuration...  You must specify the MC Server Jar file.
-    return 0
   }
 }
 
@@ -470,7 +475,7 @@ StopServer()
   If (ServerIsRunning())
   {
     SendServer("Stop")
-    SetTimer, ServerStop, 250
+    SetTimer, ServerStopTimer, 250
   }
   else
   {
@@ -479,14 +484,15 @@ StopServer()
 }
 
 
-SendServer(ByRef textline = "")
+SendServer(textline = "")
 {
   Global ServerWindowPID
   
-  If (ServerIsRunning())
+  ServerRunning := ServerIsRunning()
+  If (ServerRunning != 0)
   {
-    ControlSend,,%textline%,"ahk_pid %ServerWindowPID%"
-    ControlSend,,{Enter},"ahk_pid %ServerWindowPID%"
+    ControlSend,,%textline%,ahk_pid %ServerWindowPID%
+    ControlSend,,{Enter},ahk_pid %ServerWindowPID%
   }
   else
   {
@@ -564,6 +570,29 @@ BackupLog()
     GuiControl,, ConsoleBox, server.log backed up successfully.`n`r%OldConsole%
   }
 }
+
+
+/*
+InitializeLog()
+{
+  Global MCServerPath
+  Global FileLine
+  Global ServerStartTime
+  Global ServerStartDate
+  
+  Temp := MCServerPath . "\server.log"
+  LogFile := FileOpen(Temp, r)
+  OriginalLogContents := LogFile.Read()
+  LogFile.Close()
+  
+  Position := InStr(OriginalLogContents, ServerStartDate)
+  NewLogContents := SubStr(OriginalLogContents, Position)
+  HourMin := " " . SubStr(ServerStartTime, 1, 6)
+  Position := InStr(NewLogContents, HourMin)
+  NewLogContents := SubStr(OriginalLogContents, Position)
+  
+}
+*/
 
 
 ;This retrieves the server log line by line, picking up where last left off, and adds it to the GUI
@@ -682,14 +711,14 @@ AutomaticRestart()
 
 ButtonSubmit:
   Gui, Submit, NoHide
-  GuiControlGet, Temp,, ConsoleInput
+  GuiControlGet, ConsoleInput,, ConsoleInput
   GuiControl,, ConsoleInput, 
-  SendServer(Temp)
+  SendServer(ConsoleInput)
 return
 
 
 ButtonStartServer:
-  ServerWindowPID := StartServer()
+  StartServer()
 return
 
 
@@ -783,6 +812,8 @@ GUIUpdate:
     
     TimeToReconnect := GetConfigKey("Timing", "TimeToReconnect")
     GuiControl,, TimeToReconnect, %TimeToReconnect%
+    
+    ;Debugging: GuiControl,, ServerWindowPID, %ServerWindowPID%
   }
   if (ThisTab != "GUI Config")
   {
@@ -823,6 +854,8 @@ GUIUpdate:
     
     GuiControlGet, TimeToReconnect,, TimeToReconnect
     SetConfigKey("Timing", "TimeToReconnect", TimeToReconnect)
+    
+    ;Debugging: GuiControlGet, ServerWindowPID,, ServerWindowPID
   }
   
   If (ThisTab = "Server Config")
