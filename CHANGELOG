@@ -1,3 +1,9 @@
+Version .3.0
+  Added scheduled restarts! (Scheduled restarts make back ups normally if backups are enabled)
+  Allows for timed restart warning messages
+  Quick-change world backup options on the Main Window
+  Brought back old restart buttons
+
 Version .2.1
   Removed some guiconfig.ini keys and added new ones
   Now configure worlds within the GUI

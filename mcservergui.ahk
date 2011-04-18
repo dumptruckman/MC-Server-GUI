@@ -9,6 +9,7 @@ DetectHiddenWindows, On
 ;Initialize GUI Config Globals
 GUIPATH = %A_WorkingDir%
 InitializeConfig()
+CSVtoArray(WarningTimes)
 
 
 ;Grab Config
@@ -20,7 +21,7 @@ IniRead, UpdateRate, guiconfig.ini, Timing, UpdateRate, 250
 
 
 
-;Config GUI
+;Set up GUI
 
 Gui, Add, Tab2, w900 Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
@@ -34,23 +35,26 @@ Gui, Add, Button, xp+630 yp-5 Default, Submit
 Gui, Add, Edit, xp-640 yp+40 W700 ReadOnly r20 vConsoleBox
 
 Gui, Add, Button, x10, Start Server
-;Gui, Add, Button, yp xp+75, Warn Restart
-;Gui, Add, Button, yp xp+82, Immediate Restart
+Gui, Add, Button, yp xp+75, Warn Restart
+Gui, Add, Button, yp xp+82, Immediate Restart
 Gui, Add, Button, yp xp+105, Stop Server
 
 Gui, Add, Text, yp xp+200 w300 vServerMemUse, Memory Usage: NA
 Gui, Add, Text, yp xp+350 w100 vServerStatus cRed Bold, Not Running
+
+Gui, Add, CheckBox, x10 yp+30 vWorldBackupsMainWindow gWorldBackupsMainWindow, World Backups
+GuiControl,, WorldBackupsMainWindow, %WorldBackups%
 
 
 Gui, Tab, Server Config
 
 Gui, Add, GroupBox, x10 y30 w300 h230, Server Arguments
 Gui, Add, Text, x20 y53, Server Jar File: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vMCServerJar, %MCServerJar%
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCServerJar, %MCServerJar%
 Gui, Add, Button, xp+150 yp-2 gMCServerJarBrowse, Browse
-Gui, Add, Text, x20 yp+40, Xmx Memory: 
+Gui, Add, Text, x20 yp+30, Xmx Memory: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vServerXmx, %ServerXmx%
-Gui, Add, Text, x20 yp+25, Xms Memory: 
+Gui, Add, Text, x20 yp+30, Xms Memory: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vServerXms, %ServerXms%
 Gui, Add, CheckBox, x20 yp+25 vUseConcMarkSweepGC, -XX:+UseConcMarkSweepGC
 GuiControl,, UseConcMarkSweepGC, %UseConcMarkSweepGC%
@@ -65,37 +69,44 @@ Gui, Add, Edit, xp+91 yp-3 w30 number -wrap -multi vParallelGCThreads, %Parallel
 Gui, Add, Text, x20 yp+27, Extra Arguments:
 Gui, Add, Edit, xp+91 yp-3 w190 -wrap -multi vExtraRunArguments, %ExtraRunArguments%
 
+Gui, Add, Text, x20 yp+170 cRed, Once changes are complete, simply click on another tab to save.
+
 
 Gui, Tab, GUI Config
 
 Gui, Add, GroupBox, x10 y30 w300 h140, Folders/Executable
 Gui, Add, Text, x20 y53, MC Server Path: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vMCServerPath, %MCServerPath%
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCServerPath, %MCServerPath%
 Gui, Add, Button, xp+150 yp-2 gMCServerPathBrowse, Browse
-Gui, Add, Text, x20 yp+40, MC Backup Path: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vMCBackupPath, %MCBackupPath%
+Gui, Add, Text, x20 yp+30, MC Backup Path: 
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCBackupPath, %MCBackupPath%
 Gui, Add, Button, xp+150 yp-2 gMCBackupPathBrowse, Browse
-Gui, Add, Text, x20 yp+40, Java Executable: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vJavaExec, %JavaExec%
+Gui, Add, Text, x20 yp+30, Java Executable: 
+Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vJavaExec, %JavaExec%
 Gui, Add, Button, xp+150 yp-2 gJavaExecutableBrowse, Browse
 
-Gui, Add, Text, x20 yp+60, GUI Window Title:
+Gui, Add, Text, x20 yp+80, GUI Window Title:
 Gui, Add, Edit, xp+90 yp-3 w195 vWindowTitle, %WindowTitle%
 
 Gui, Add, Text, x20 yp+27, Update Rate: 
 Gui, Add, Edit, xp+70 yp-3 w215 number vUpdateRate, %UpdateRate%
 Gui, Add, Text, x20 yp+22, (How often the console window is refreshed in miliseconds)
 
-Gui, Add, Text, x20 yp+150 cRed, Once changes are complete, simply click on Main Window to save.
+Gui, Add, Text, x20 yp+171 cRed, Once changes are complete, simply click on another tab to save.
 
-Gui, Add, GroupBox, x312 y30 w300 h300, Backups
+Gui, Add, GroupBox, x312 y30 w300 h335, Backups
 Gui, Add, CheckBox, x322 y53 vWorldBackups, Run World Backups
 GuiControl,, WorldBackups, %WorldBackups%
 Gui, Add, CheckBox, x322 yp+20 vLogBackups, Run Log Backups (Highly Recommended)
 GuiControl,, LogBackups, %LogBackups%
 Gui, Add, Text, x322 yp+20, Enter names of worlds below:`n  (separate each one with a comma and NO spaces)
-Gui, Add, Edit, x322 yp+35 w200 -multi vWorldList, %WorldList%
-;Gui, Add, Text, x322 yp+23, Please set up your worlds in guiconfig.ini`nIt will be in the same directory as this program`nEnter each world in the following format:`nWorldN=worldname`nWhere N is the number for the world and worldname is `nthe name of the folder the world is stored in.`nExample:`nWorld1=world`nWorld2=nether`nWorld3=whathaveyou`netc..
+Gui, Add, Edit, x322 yp+35 w280 -multi vWorldList, %WorldList%
+Gui, Add, Text, x322 yp+30, Enter the time at which you would like to run automated`n restarts in HH:MM:SS (24-hour) format.  Separate each `n time by commas with NO spaces: (Leave blank for none)
+Gui, Add, Edit, x322 yp+45 w280 -multi vRestartTimes, %RestartTimes%
+Gui, Add, Text, x322 yp+30, Enter the times, at which automated restarts will warn the`n the server, in Seconds.  List them in descending order,`n separated by commas with NO Spaces:
+Gui, Add, Edit, x322 yp+45 w280 -multi vWarningTimes, %WarningTimes%
+Gui, Add, Text, x322 yp+30, Amount of time to tell players to wait to reconnect:`n (This will be added to the current warning's time)`n (In seconds)
+Gui, Add, Edit, xp+235 yp-3 w30 number -multi vTimeToReconnect, %TimeToReconnect%
 
 Gui, Show, Restore, %WindowTitle%
 
@@ -104,7 +115,7 @@ Gui, Show, Restore, %WindowTitle%
 ;Main Phase
 
 SetTimer, MainTimer, %UpdateRate%
-SetTimer, BackupScheduler, 1000
+SetTimer, RestartScheduler, 1000
 return
 
 
@@ -116,8 +127,11 @@ MainTimer:
 return
 
 
-BackupScheduler:
-
+RestartScheduler:
+  If (CheckForRestarts())
+  {
+    InitiateAutomaticRestart()
+  }
 return
 
 
@@ -131,6 +145,41 @@ ServerStop:
     GuiControl,, ServerStatus, Not Running
     Backup()
   }
+return
+
+WaitForRestartTimer:
+  ErrorLevel = 0
+  Process, Exist, %ServerWindowPID%
+  If ( ! ErrorLevel )
+  {
+    If (!IsBackingUp)
+    {
+      SetTimer, WaitForRestartTimer, Off
+      ServerWindowPID := StartServer()
+    }
+  }
+return
+
+
+AutomaticRestartTimer:
+  If ((WarningTimesIndex > WarningTimesArray.MaxIndex()) or (WarningTimesArray[WarningTimesIndex] = ""))
+  {
+    If (RestartCountDown = 0)
+    {
+      AutomaticRestart()
+      SetTimer, AutomaticRestartTimer, Off
+      return
+    }
+  }
+  else
+  {
+    If (WarningTimesArray[WarningTimesIndex] = RestartCountDown)
+    {
+      WarningTimesIndex := WarningTimesIndex + 1
+      SendServer("say Automatic restart in " . RestartCountDown . " seconds.  Please reconnect in approximately " . (RestartCountDown + TimeToReconnect) . " seconds.")
+    }
+  }
+  RestartCountDown := RestartCountDown - 1
 return
 
 
@@ -168,6 +217,9 @@ InitializeConfig()
   ExtraRunArguments := GetConfigKey("ServerArguments", "Extra", "")
   WindowTitle := GetConfigKey("Names", "GUIWindowTitle", "MC Server GUI")
   UpdateRate := GetConfigKey("Timing", "UpdateRate", "250")
+  RestartTimes := GetConfigKey("Timing", "RestartTimes", "")
+  WarningTimes := GetConfigKey("Timing", "WarningTimes", "30,15,5")
+  TimeToReconnect := GetConfigKey("Timing", "TimeToReconnect", "30")
   WorldBackups := GetConfigKey("Backups", "RunWorldBackups", "1")
   LogBackups := GetConfigKey("Backups", "RunLogBackups", "1")
   WorldList := ReadWorlds()
@@ -246,6 +298,21 @@ WriteWorlds(Worlds)
       IniWrite, %A_LoopField%, %GUIPATH%\guiconfig.ini, Worlds, %WorldIndex%
     }
   }
+}
+
+
+CSVtoArray(ByRef ToProcess)
+{
+  Index = 1
+  TempArray := Object()
+  Loop, Parse, ToProcess, `,
+  {
+    Test := TempArray.Insert(A_LoopField)
+    If (!Test)
+      MsgBox, Fail
+    Index := Index + 1
+  }
+  return TempArray
 }
 
 
@@ -406,7 +473,10 @@ SendServer(ByRef textline = "")
 Backup()
 {
   Global LogBackups
-  Global WorldBackups 
+  Global WorldBackups
+  Global IsBackingUp
+  
+  IsBackingUp = 1
   
   if (LogBackups = "1")     ;Runs log backups if suppose to
   {
@@ -426,6 +496,8 @@ Backup()
       }
     }
   }
+  
+  IsBackingUp = 0
 }
 
 
@@ -536,6 +608,50 @@ GetProcessMemory_WorkingSet(ProcID, Units="K") {
 }
 
 
+CheckForRestarts()
+{
+  Global RestartTimes
+  
+  CurrentTime := A_Hour . ":" . A_Min . ":" . A_Sec
+  If (InStr(RestartTimes, CurrentTime))
+  {
+    return 1
+  }
+  return 0
+}
+
+
+InitiateAutomaticRestart()
+{
+  Global WarningTimes
+
+  If (WarningTimes != "")
+  {
+    Global RestartCountDown
+    Global WarningTimesArray
+    Global WarningTimesIndex
+  
+    WarningTimesArray := CSVtoArray(WarningTimes)
+    RestartCountDown := WarningTimesArray[1]
+    WarningTimesIndex = 1
+    
+    SetTimer, AutomaticRestartTimer, 1000
+  }
+  else
+  {
+    AutomaticRestart()
+  }
+}
+
+
+AutomaticRestart()
+{
+  SendServer("save-all")
+  StopServer()
+  SetTimer, WaitForRestartTimer, 1000
+}
+
+
 
 ;Buttons
 
@@ -551,25 +667,16 @@ ButtonStartServer:
   ServerWindowPID := StartServer()
 return
 
-/*
+
 ButtonWarnRestart:
-  SendServer("say Automated restart/backup in 30 seconds...")
-  sleep 15000
-  SendServer("say Automated restart/backup in 15 seconds...")
-  SendServer("Save-all")
-  sleep 10000
-  SendServer("say Automated restart/backup in 5 seconds.  Please reconnect in approximately 30 seconds.")
-  sleep 5000
-  StopServer()
-  ServerWindowPID := StartServer()
+  InitiateAutomaticRestart()
 return
 
 
 ButtonImmediateRestart:
-  StopServer()
-  ServerWindowPID := StartServer()
+  AutomaticRestart()
 return
-*/
+
 
 ButtonStopServer:
   StopServer()
@@ -599,8 +706,21 @@ McServerJarBrowse:
 return
 
 
+WorldBackupsMainWindow:
+  Gui, Submit, NoHide
+  GuiControlGet, WorldBackups,, WorldBackupsMainWindow
+  SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
+return
+
+
 GUIUpdate:
   GuiControlGet, ThisTab,, ThisTab
+  If (ThisTab = "Main Window")
+  {
+    WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
+    Gui, Submit, NoHide
+    GuiControl,, WorldBackupsMainWindow, %WorldBackups%
+  }
   if (ThisTab = "GUI Config")
   {
     MCServerPath := GetConfigKey("Folders", "ServerPath") 
@@ -629,6 +749,15 @@ GUIUpdate:
     
     WorldList := ReadWorlds()
     GuiControl,, WorldList, %WorldList%
+    
+    RestartTimes := GetConfigKey("Timing", "RestartTimes")
+    GuiControl,, RestartTimes, %RestartTimes%
+    
+    WarningTimes := GetConfigKey("Timing", "WarningTimes")
+    GuiControl,, WarningTimes, %WarningTimes%
+    
+    TimeToReconnect := GetConfigKey("Timing", "TimeToReconnect")
+    GuiControl,, TimeToReconnect, %TimeToReconnect%
   }
   if (ThisTab != "GUI Config")
   {
@@ -660,6 +789,15 @@ GUIUpdate:
     
     GuiControlGet, WorldList,, WorldList
     WriteWorlds(WorldList)
+    
+    GuiControlGet, RestartTimes,, RestartTimes
+    SetConfigKey("Timing", "RestartTimes", RestartTimes)
+    
+    GuiControlGet, WarningTimes,, WarningTimes
+    SetConfigKey("Timing", "WarningTimes", WarningTimes)
+    
+    GuiControlGet, TimeToReconnect,, TimeToReconnect
+    SetConfigKey("Timing", "TimeToReconnect", TimeToReconnect)
   }
   
   If (ThisTab = "Server Config")
