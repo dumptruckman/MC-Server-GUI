@@ -457,7 +457,7 @@ StartServer()
       GuiControl, Disable, ServerProperties
       RunThis := BuildRunLine()
       SetServerStartTime()
-      Run, %RunThis%, %MCServerPath%, , ServerWindowPID
+      Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
       ;InitializeLog()
     }
   }

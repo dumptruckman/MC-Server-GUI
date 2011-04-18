@@ -1,3 +1,6 @@
+Version .3.3
+  Forgot to hide the java window in the last version. Fixed~
+
 Version .3.2
   Possibly fixed bug where GUI would lose track of the actual MC Server and cause a lot of other problems
   This includes the server starting then all of a sudden saying it isn't running
