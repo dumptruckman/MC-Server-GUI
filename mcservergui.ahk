@@ -9,11 +9,7 @@ DetectHiddenWindows, On
 ;Initialize GUI Config Globals
 GUIPATH = %A_WorkingDir%
 InitializeConfig()
-CSVtoArray(WarningTimes)
-
-
-;Grab Config
-IniRead, UpdateRate, guiconfig.ini, Timing, UpdateRate, 250
+ServerProperties := ReadServerProps()
 
 
 
@@ -70,6 +66,9 @@ Gui, Add, Text, x20 yp+27, Extra Arguments:
 Gui, Add, Edit, xp+91 yp-3 w190 -wrap -multi vExtraRunArguments, %ExtraRunArguments%
 
 Gui, Add, Text, x20 yp+170 cRed, Once changes are complete, simply click on another tab to save.
+
+Gui, Add, Text, x322 y30, Edit server.properties here:
+Gui, Add, Edit, x322 yp+20 w300 r20 -wrap vServerProperties, %ServerProperties%
 
 
 Gui, Tab, GUI Config
@@ -142,6 +141,7 @@ ServerStop:
   {
     SetTimer, ServerStop, Off
     ServerWindowPID = 0
+    GuiControl, Enable, ServerProperties
     GuiControl,, ServerStatus, Not Running
     Backup()
   }
@@ -301,6 +301,28 @@ WriteWorlds(Worlds)
 }
 
 
+ReadServerProps()
+{
+  Global MCServerPath
+  
+  FileRead, ReadInto, %MCServerPath%\server.properties
+  if (ErrorLevel)
+  {
+    return ""
+  }
+  return ReadInto
+}
+
+
+WriteServerProps(ByRef ServerProperties)
+{
+  Global MCServerPath
+
+  FileDelete, %MCServerPath%\server.properties
+  FileAppend, %ServerProperties%, %MCServerPath%\server.properties
+}
+
+
 CSVtoArray(ByRef ToProcess)
 {
   Index = 1
@@ -366,9 +388,7 @@ MainProcess()
 {
   Global ServerWindowPID
   
-  ErrorLevel = 0
-  Process, Exist, %ServerWindowPID%
-  If ErrorLevel
+  If (ServerIsRunning())
   {
     Gui, Font, cGreen Bold,
     GuiControl, Font, ServerStatus
@@ -381,10 +401,10 @@ MainProcess()
     FileGetSize, NewLogSize, server.log
     FileGetVersion, trash, server.log       ;This is necessary to "refresh" the log file
     
-    if NewLogSize != %LastLogSize%        ;Changes found
+    if (NewLogSize != LastLogSize)        ;Changes found
     {
       GetLog()                        
-      LastLogSize = %NewLogSize%             ;Updates last checked filesize
+      LastLogSize := NewLogSize            ;Updates last checked filesize
     }
     
   }
@@ -398,6 +418,16 @@ MainProcess()
 }
 
 
+ServerIsRunning()
+{
+  Global ServerWindowPID
+  
+  ErrorLevel = 0
+  Process, Exist, %ServerWindowPID%
+  return ErrorLevel
+}
+
+
 ;Runs the server and returns the PID
 StartServer()
 {
@@ -407,9 +437,7 @@ StartServer()
   
   if (MCServerJar != "Set this")
   {
-    ErrorLevel = 0
-    Process, Exist, %ServerWindowPID%
-    If ErrorLevel
+    If (ServerIsRunning())
     {
       MsgBox, Server is already running!
       return ServerWindowPID
@@ -421,6 +449,7 @@ StartServer()
       InitializeVariables()
       Global MCServerPath
       
+      GuiControl, Disable, ServerProperties
       RunThis := BuildRunLine()
       Run, %RunThis%, %MCServerPath%, Hide, PID
       return PID
@@ -437,10 +466,8 @@ StartServer()
 StopServer()
 {
   Global StopWait
-  Global ServerWindowPID
-  ErrorLevel = 0
-  Process, Exist, %ServerWindowPID%
-  If ErrorLevel
+ 
+  If (ServerIsRunning())
   {
     SendServer("Stop")
     SetTimer, ServerStop, 250
@@ -455,10 +482,8 @@ StopServer()
 SendServer(ByRef textline = "")
 {
   Global ServerWindowPID
-  ;If server is running it will give the message
-  ErrorLevel = 0
-  Process, Exist, %ServerWindowPID%
-  If ErrorLevel
+  
+  If (ServerIsRunning())
   {
     ControlSend,,%textline%,"ahk_pid %ServerWindowPID%"
     ControlSend,,{Enter},"ahk_pid %ServerWindowPID%"
@@ -828,6 +853,9 @@ GUIUpdate:
     
     ExtraRunArguments := GetConfigKey("ServerArguments", "Extra")
     GuiControl,, ExtraRunArguments, %ExtraRunArguments%
+    
+    ServerProperties := ReadServerProps()
+    GuiControl,, ServerProperties, %ServerProperties%
   }
   If (ThisTab != "Server Config")
   {
@@ -857,6 +885,12 @@ GUIUpdate:
     
     GuiControlGet, ExtraRunArguments,, ExtraRunArguments
     SetConfigKey("ServerArguments", "Extra", ExtraRunArguments)
+    
+    If (!ServerIsRunning())
+    {
+      GuiControlGet, ServerProperties,, ServerProperties
+      WriteServerProps(ServerProperties)
+    }
   }
 return
 

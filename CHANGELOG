@@ -1,3 +1,6 @@
+Version .3.1
+  Added edit box for server.properties to Server Config tab (only works while server is not running)
+
 Version .3.0
   Added scheduled restarts! (Scheduled restarts make back ups normally if backups are enabled)
   Allows for timed restart warning messages
