@@ -20,6 +20,7 @@ ServerProperties := ReadServerProps()
 
 Gui, Add, Tab2, w900 Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
+Gui, Add, Text, xp+835 yp, Version .3.3
 
 Gui, Tab, Main Window
 
@@ -457,7 +458,7 @@ StartServer()
       GuiControl, Disable, ServerProperties
       RunThis := BuildRunLine()
       SetServerStartTime()
-      Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
+      Run, %RunThis%, %MCServerPath%, , ServerWindowPID
       ;InitializeLog()
     }
   }
@@ -491,8 +492,9 @@ SendServer(textline = "")
   ServerRunning := ServerIsRunning()
   If (ServerRunning != 0)
   {
-    ControlSend,,%textline%,ahk_pid %ServerWindowPID%
-    ControlSend,,{Enter},ahk_pid %ServerWindowPID%
+    SetKeyDelay, 10, 10
+    ControlSend,, %textline%, ahk_pid %ServerWindowPID%
+    ControlSend,, {Enter}, ahk_pid %ServerWindowPID%
   }
   else
   {
