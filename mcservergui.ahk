@@ -20,7 +20,7 @@ ServerProperties := ReadServerProps()
 
 Gui, Add, Tab2, w900 Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
-Gui, Add, Text, xp+835 yp, Version .3.3
+Gui, Add, Text, xp+835 yp, Version .3.4
 
 Gui, Tab, Main Window
 
@@ -34,12 +34,14 @@ Gui, Add, Button, x10, Start Server
 Gui, Add, Button, yp xp+75, Warn Restart
 Gui, Add, Button, yp xp+82, Immediate Restart
 Gui, Add, Button, yp xp+105, Stop Server
-
-Gui, Add, Text, yp xp+200 w300 vServerMemUse, Memory Usage: NA
-Gui, Add, Text, yp xp+350 w100 vServerStatus cRed Bold, Not Running
+Gui, Add, Button, yp xp+120 vJavaToggle gJavaToggle, Show Java Console
+GuiControl, Disable, JavaToggle
 
 Gui, Add, CheckBox, x10 yp+30 vWorldBackupsMainWindow gWorldBackupsMainWindow, World Backups
 GuiControl,, WorldBackupsMainWindow, %WorldBackups%
+
+Gui, Add, Text, yp xp+120 w300 vServerMemUse, Memory Usage: NA
+Gui, Add, Text, yp xp+500 w100 vServerStatus cRed Bold, Not Running
 
 
 Gui, Tab, Server Config
@@ -67,7 +69,7 @@ Gui, Add, Edit, xp+91 yp-3 w190 -wrap -multi vExtraRunArguments, %ExtraRunArgume
 
 Gui, Add, Text, x20 yp+170 cRed, Once changes are complete, simply click on another tab to save.
 
-Gui, Add, Text, x322 y30, Edit server.properties here:
+Gui, Add, Text, x322 y30, Edit server.properties here: (Server must not be running)
 Gui, Add, Edit, x322 yp+20 w300 r20 -wrap vServerProperties, %ServerProperties%
 
 
@@ -140,9 +142,16 @@ ServerStopTimer:
   {
     SetTimer, ServerStopTimer, Off
     ServerWindowPID = 0
+    GuiControl, Disable, JavaToggle
+    GuiControl, , JavaToggle, Show Java Console
     GuiControl, Enable, ServerProperties
     GuiControl,, ServerStatus, Not Running
     Backup()
+  }
+  StopTimeout := StopTimeout + 1
+  If (StopTimeout = 60)
+  {
+    Process, Close, ServerWindowPID
   }
 return
 
@@ -373,10 +382,35 @@ BuildRunLine()
   {
     ServerArgs := ServerArgs . " " . ExtraRunArguments
   }
-  ServerArgs := ServerArgs . " -jar " . MCServerJar ;. " nogui"
+  ServerArgs := ServerArgs . " -jar " . MCServerJar . " nogui"
   
-  RunLine := JavaExec . A_Space . ServerArgs
+  RunLine := "" . JavaExec . " " . ServerArgs
   return RunLine
+}
+
+
+VerifyPaths()
+{
+  Global MCServerPath
+  Global MCBackupPath
+  
+  IfExist, %MCServerPath%
+  {
+    IfExist, %MCBackupPath%
+    {
+      return 1
+    }
+    else
+    {
+      MsgBox, MC Backup Path points to a non-existant folder!
+      return 0
+    }
+  }
+  else
+  {
+    MsgBox, MC Server Path points to a non-existant folder!
+    return 0
+  }
 }
 
 
@@ -390,6 +424,7 @@ MainProcess()
     Gui, Font, cGreen Bold,
     GuiControl, Font, ServerStatus
     GuiControl,, ServerStatus, Running
+    
     PeakWorkingSet := GetProcessMemory_PeakWorkingSet(ServerWindowPID, "M")
     WorkingSet := GetProcessMemory_WorkingSet(ServerWindowPID, "M")
     GuiControl,, ServerMemUse, Memory Usage: %WorkingSet% M / %PeakWorkingSet% M
@@ -448,18 +483,27 @@ StartServer()
     }
     else
     {
-      Global MCServerPath
-      Global ServerWindowPID
-      
-      SetWorkingDir, %MCServerPath%
-      GuiControl,, ConsoleBox, 
-      InitializeVariables()
-      
-      GuiControl, Disable, ServerProperties
-      RunThis := BuildRunLine()
-      SetServerStartTime()
-      Run, %RunThis%, %MCServerPath%, , ServerWindowPID
-      ;InitializeLog()
+      If (VerifyPaths() = 1)
+      {
+        Global MCServerPath
+        Global ServerWindowPID
+        
+        SetWorkingDir, %MCServerPath%
+        GuiControl,, ConsoleBox, 
+        InitializeVariables()
+        
+        GuiControl, Disable, ServerProperties
+        GuiControl, Enable, JavaToggle
+        GuiControl,, JavaToggle, Show Java Console
+        RunThis := BuildRunLine()
+        SetServerStartTime()
+        Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
+        ;InitializeLog()
+      }
+      else
+      {
+        GuiControl,, ConsoleBox, Your paths are not set up properly, please make corrections in GUI Config before continuing.
+      }
     }
   }
   else
@@ -472,11 +516,13 @@ StartServer()
 StopServer()
 {
   Global StopWait
+  Global StopTimeout
  
   If (ServerIsRunning())
   {
     SendServer("Stop")
-    SetTimer, ServerStopTimer, 250
+    StopTimeout = 0
+    SetTimer, ServerStopTimer, 1000
   }
   else
   {
@@ -493,8 +539,8 @@ SendServer(textline = "")
   If (ServerRunning != 0)
   {
     SetKeyDelay, 10, 10
-    ControlSend,, %textline%, ahk_pid %ServerWindowPID%
-    ControlSend,, {Enter}, ahk_pid %ServerWindowPID%
+    ControlSend,,%textline%,ahk_pid %ServerWindowPID%    
+    ControlSend,,{Enter},ahk_pid %ServerWindowPID%
   }
   else
   {
@@ -739,6 +785,21 @@ ButtonStopServer:
 return
 
 
+JavaToggle:
+  GuiControlGet, JavaToggle,, JavaToggle
+  If (JavaToggle = "Show Java Console")
+  {
+    WinShow, ahk_pid %ServerWindowPID%
+    GuiControl,, JavaToggle, Hide Java Console
+  }
+  If (JavaToggle = "Hide Java Console")
+  {
+    WinHide, ahk_pid %ServerWindowPID%
+    GuiControl,, JavaToggle, Show Java Console
+  }
+return
+
+
 MCServerPathBrowse:
   FileSelectFolder, MCServerPath, %A_ComputerName%, 3, Please locate your Minecraft Server Directory
   GuiControl,, MCServerPath, %MCServerPath%
@@ -758,6 +819,7 @@ return
 
 McServerJarBrowse:
   FileSelectFile, MCServerJar,, %MCServerPath%, Select the .jar file for your server. craftbukkit.jar for example, *.jar
+  SplitPath, MCServerJar, MCServerJar
   GuiControl,, MCServerJar, %MCServerJar%
 return
 

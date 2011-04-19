@@ -1,3 +1,11 @@
+Version .3.4
+  Fixed issues with folder names/locations preventing GUI from working properly
+  Added version indicator
+  Added a button to show/hide the Java Console
+  Moved some elements around a bit
+  Added error checking for file/folder names
+  No longer stores the path for server jar, just filename (Increases compatibility)
+
 Version .3.3
   Forgot to hide the java window in the last version. Fixed~
 
