@@ -1,5 +1,10 @@
+;Include RichEdit libs
+#Include cGUI.ahk
+#Include cRichEdit.ahk
+
 ;Initialize Internal Global Variables
 ServerWindowPID = 0
+ServerWindowID = 0
 InitializeVariables()
 
 ;Initialize AHK Config
@@ -20,7 +25,7 @@ ServerProperties := ReadServerProps()
 
 Gui, Add, Tab2, w900 Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
-Gui, Add, Text, xp+835 yp, Version .3.4
+Gui, Add, Text, xp+835 yp, Version .3.5
 
 Gui, Tab, Main Window
 
@@ -28,6 +33,9 @@ Gui, Add, GroupBox, x10 y30 w700, Console Input
 Gui, Add, Edit, xp+10 yp+20 w620 vConsoleInput
 Gui, Add, Button, xp+630 yp-5 Default, Submit
 
+;Gui, Add, Picture, x10 y85 w700 h275 HwndREparent1
+;cGUI("1:Add:" . REparent1, ConsoleBox, 0, 0, 700, 275, "RichEdit20W")
+;cRichEdit(ConsoleBox, "ReadOnly")
 Gui, Add, Edit, xp-640 yp+40 W700 ReadOnly r20 vConsoleBox
 
 Gui, Add, Button, x10, Start Server
@@ -116,7 +124,7 @@ Gui, Show, Restore, %WindowTitle%
 
 ;Main Phase
 
-SetTimer, MainTimer, %UpdateRate%
+SetTimer, MainTimer, 250
 SetTimer, RestartScheduler, 1000
 return
 
@@ -126,6 +134,11 @@ return
 
 MainTimer:
   MainProcess()
+return
+
+
+ServerRunningTimer:
+  ProcessLog()
 return
 
 
@@ -141,7 +154,9 @@ ServerStopTimer:
   If (!ServerIsRunning())
   {
     SetTimer, ServerStopTimer, Off
+    SetTimer, ServerRunningTimer, Off
     ServerWindowPID = 0
+    ServerWindowID = 0
     GuiControl, Disable, JavaToggle
     GuiControl, , JavaToggle, Show Java Console
     GuiControl, Enable, ServerProperties
@@ -192,14 +207,63 @@ return
 
 ;Functions
 
+;Main Process that runs at %UpdateRate% intervals
+MainProcess()
+{
+  Global ServerWindowPID
+  
+  If (ServerIsRunning())
+  {
+    Gui, Font, cGreen Bold,
+    GuiControl, Font, ServerStatus
+    GuiControl,, ServerStatus, Running
+    
+    PeakWorkingSet := GetProcessMemory_PeakWorkingSet(ServerWindowPID, "M")
+    WorkingSet := GetProcessMemory_WorkingSet(ServerWindowPID, "M")
+    GuiControl,, ServerMemUse, Memory Usage: %WorkingSet% M / %PeakWorkingSet% M
+  }
+  else
+  {
+    GuiControl,, ServerMemUse, Memory Usage: NA
+    Gui, Font, cRed Bold,
+    GuiControl, Font, ServerStatus
+    GuiControl,, ServerStatus, Not Running
+    SetTimer, ServerRunningTimer, Off
+  }
+}
+
+
+ProcessLog()
+{
+  Global MCServerPath
+  
+  TempDir = %A_WorkingDir%
+  SetWorkingDir, %MCServerPath%
+  
+  ;Reads the log file size and compares it to the last checked size... (Detects log changes and updates GUI)
+  FileGetSize, NewLogSize, server.log
+  FileGetVersion, trash, server.log       ;This is necessary to "refresh" the log file
+  
+  if (NewLogSize != LastLogSize)          ;Changes found
+  {
+    GetLog()                        
+    LastLogSize := NewLogSize             ;Updates last checked filesize
+  }
+  
+  SetWorkingDir, %TempDir%
+}
+
+
 ;Resets Variables to initial values
 InitializeVariables()
 {
   Global LogSize
   Global FileLine
+  Global LogFilePointer
   
   FileGetSize, LogSize, server.log
   FileLine = 1
+  LogFilePointer = 0
   GuiControl,, ConsoleBox, 
 }
 
@@ -414,42 +478,6 @@ VerifyPaths()
 }
 
 
-;Main Process that runs at %UpdateRate% intervals
-MainProcess()
-{
-  Global ServerWindowPID
-  
-  If (ServerIsRunning())
-  {
-    Gui, Font, cGreen Bold,
-    GuiControl, Font, ServerStatus
-    GuiControl,, ServerStatus, Running
-    
-    PeakWorkingSet := GetProcessMemory_PeakWorkingSet(ServerWindowPID, "M")
-    WorkingSet := GetProcessMemory_WorkingSet(ServerWindowPID, "M")
-    GuiControl,, ServerMemUse, Memory Usage: %WorkingSet% M / %PeakWorkingSet% M
-    
-    ;Reads the log file size and compares it to the last checked size... (Detects log changes and updates GUI)
-    FileGetSize, NewLogSize, server.log
-    FileGetVersion, trash, server.log       ;This is necessary to "refresh" the log file
-    
-    if (NewLogSize != LastLogSize)        ;Changes found
-    {
-      GetLog()                        
-      LastLogSize := NewLogSize            ;Updates last checked filesize
-    }
-    
-  }
-  else
-  {
-    GuiControl,, ServerMemUse, Memory Usage: NA
-    Gui, Font, cRed Bold,
-    GuiControl, Font, ServerStatus
-    GuiControl,, ServerStatus, Not Running
-  }
-}
-
-
 ServerIsRunning()
 {
   Global ServerWindowPID
@@ -462,11 +490,9 @@ ServerIsRunning()
 
 SetServerStartTime()
 {
-  Global ServerStartDate
-  Global ServerStartTime
+  Global ServerStartDateTime
   
-  ServerStartDate := A_YYYY . "-" . A_MM . "-" . A_DD
-  ServerStartTime := A_Hour . ":" . A_Min . ":" . A_Sec
+  ServerStartDateTime := A_YYYY . "-" . A_MM . "-" . A_DD . " " . A_Hour . ":" . A_Min . ":" . A_Sec
 }
 
 
@@ -487,9 +513,22 @@ StartServer()
       {
         Global MCServerPath
         Global ServerWindowPID
-        
+        Global ServerWindowID
+        Global UpdateRate
+
         SetWorkingDir, %MCServerPath%
-        GuiControl,, ConsoleBox, 
+        
+        FileGetSize, LogFileSize, server.log, K
+        If (LogFileSize > 2048)
+        {
+          MsgBox, 4, Large Log File, Your log file is %LogFileSize% KB.  This is quite large.  Would you like to back it up and start a new one?  This window will time out in 10 seconds, 10
+        }
+        IfMsgBox Yes
+        {
+          BackupLog()
+          Sleep 2000
+        }
+        
         InitializeVariables()
         
         GuiControl, Disable, ServerProperties
@@ -498,7 +537,10 @@ StartServer()
         RunThis := BuildRunLine()
         SetServerStartTime()
         Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
-        ;InitializeLog()
+        InitializeLog()
+        WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID%
+        GuiControl,, ConsoleBox,
+        SetTimer, ServerRunningTimer, %UpdateRate%
       }
       else
       {
@@ -533,14 +575,14 @@ StopServer()
 
 SendServer(textline = "")
 {
-  Global ServerWindowPID
+  Global ServerWindowID
   
   ServerRunning := ServerIsRunning()
   If (ServerRunning != 0)
   {
-    SetKeyDelay, 10, 10
-    ControlSend,,%textline%,ahk_pid %ServerWindowPID%    
-    ControlSend,,{Enter},ahk_pid %ServerWindowPID%
+    ;SetKeyDelay, -1, -1
+    ControlSend,,%textline%, ahk_id %ServerWindowID%
+    ControlSend,,{Enter}, ahk_id %ServerWindowID%
   }
   else
   {
@@ -610,55 +652,116 @@ BackupLog()
   newfiletime := substr(newfiletime, 1, 4) . "-" . substr(newfiletime, 5, 2) . "-" . substr(newfiletime, 7, 2) . " " . substr(newfiletime, 9, 2) . "." . substr(newfiletime, 11, 2) . "." . substr(newfiletime, 13, 2)
   filename = %MCBackupPath%\%newfiletime%.log
   FileCopy, %MCServerPath%\server.log, %filename%
-  FileDelete, %MCServerPath%\server.log
-  FileAppend, ,%MCServerPath%\server.log
   IfExist, %filename%
   {
+    FileDelete, %MCServerPath%\server.log
+    FileAppend, ,%MCServerPath%\server.log
     GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
     GuiControl,, ConsoleBox, server.log backed up successfully.`n`r%OldConsole%
   }
 }
 
 
-/*
 InitializeLog()
 {
+  ;Retrieve required globals
   Global MCServerPath
-  Global FileLine
-  Global ServerStartTime
-  Global ServerStartDate
+  Global LogFilePointer
+  Global ServerStartDateTime
+   
+  TempDir = %A_WorkingDir%
+  SetWorkingDir, %MCServerPath%
   
-  Temp := MCServerPath . "\server.log"
-  LogFile := FileOpen(Temp, r)
-  OriginalLogContents := LogFile.Read()
-  LogFile.Close()
+  GuiControl,, ConsoleBox, Initializing console readout... If this takes a while, consider backing up your logs...
+  Sleep 1000
+  FileGetVersion, trash, %Temp%                     ;"Refreshes" the log file... Not sure if necessary
+  LogFile := FileOpen("server.log", "r")            ;Open the log file
+  OriginalLogContents := LogFile.Read()   ;Read the whole log into OriginalLogContents
+  LogFile.Close()                         ;Close the log file
   
-  Position := InStr(OriginalLogContents, ServerStartDate)
-  NewLogContents := SubStr(OriginalLogContents, Position)
-  HourMin := " " . SubStr(ServerStartTime, 1, 6)
-  Position := InStr(NewLogContents, HourMin)
-  NewLogContents := SubStr(OriginalLogContents, Position)
+  Position = 1
+  Loop
+  {
+    Position := InStr(OriginalLogContents, " [INFO] Starting", false, Position)     ;Find the first position of the date the server was started
+    LineDateTime := SubStr(OriginalLogContents, (Position-19), 19)
+    If (TimeIsAfter(ServerStartDateTime, LineDateTime) = 1)
+    {
+      LogFilePointer := Position - 20
+      break
+    }
+    else
+    {
+      Position := InStr(OriginalLogContents, "minecraft", false, Position)
+    }    
+  }
   
+  SetWorkingDir, %TempDir%
 }
-*/
+
+
+TimeIsAfter(startTime, afterTime)
+{
+  startTime := substr(startTime, 1, 4) . substr(startTime, 6, 2) . substr(startTime, 9, 2) . substr(startTime, 12, 2) . substr(startTime, 15, 2) . substr(startTime, 18, 2)
+  afterTime := substr(afterTime, 1, 4) . substr(afterTime, 6, 2) . substr(afterTime, 9, 2) . substr(afterTime, 12, 2) . substr(afterTime, 15, 2) . substr(afterTime, 18, 2)
+  if (afterTime >= startTime)
+  {
+    return 1
+  }
+  else
+  {
+    return 0
+  }
+}
 
 
 ;This retrieves the server log line by line, picking up where last left off, and adds it to the GUI
 GetLog()          
 {
-  Global FileLine
-  ErrorLevel = 0          ;Not sure this is necessary...
-  loop                    ;Loops through log file line by line
+  Global MCServerPath
+  Global LogFilePointer
+  
+  TempDir = %A_WorkingDir%
+  SetWorkingDir, %MCServerPath%
+  
+  LogFile := FileOpen("server.log", "r")
+  LogFile.Seek(LogFilePointer)
+
+  loop                                    ;Loops through log file line by line after last left off position
   {
-    FileReadLine, Line, server.log, %FileLine%
-    if ErrorLevel = 1           ;If %FileLine% of the log is empty, breaks out of the loop
+    If (LogFile.AtEOF)
     {
+      LogFilePointer := LogFile.Tell()
       break
-    }    
-    GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
-    GuiControl,, ConsoleBox, %Line%`n`r%OldConsole%     ;Adds new data to the top of current contents
-    FileLine := FileLine + 1                            ;Moves to the next line
+    }
+    Line := LogFile.ReadLine()
+    ParseLogIntake(Line)
   }
+  LogFile.Close()
+  
+  SetWorkingDir, %TempDir%
+}
+
+
+ParseLogIntake(ByRef Line)
+{
+  GuiControlGet, OldConsole,, ConsoleBox            ;Retrieves what's already in the console
+  /*
+  INFO_TagExists := InStr(Line, "[INFO]")
+  If (INFO_TagExists)
+  {
+    beforeTag := SubStr(Line, 1, (INFO_TagExists + 1))
+    afterTag := SubStr(Line, (INFO_TagExists + 5))
+    GuiControl,, ConsoleBox, %afterTag%%OldConsole%
+    GuiControlGet, OldConsole,, ConsoleBox
+    Gui, Font, cOlive wBold,
+    GuiControl, Font, ConsoleBox
+    GuiControl,, ConsoleBox, Running
+  }
+  else
+  {
+  */
+    GuiControl,, ConsoleBox, %Line%%OldConsole%     ;Adds new data to the top of current contents
+  ; }
 }
 
 
@@ -789,12 +892,12 @@ JavaToggle:
   GuiControlGet, JavaToggle,, JavaToggle
   If (JavaToggle = "Show Java Console")
   {
-    WinShow, ahk_pid %ServerWindowPID%
+    WinShow, ahk_id %ServerWindowID%
     GuiControl,, JavaToggle, Hide Java Console
   }
   If (JavaToggle = "Hide Java Console")
   {
-    WinHide, ahk_pid %ServerWindowPID%
+    WinHide, ahk_id %ServerWindowID%
     GuiControl,, JavaToggle, Show Java Console
   }
 return
