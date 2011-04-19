@@ -1,6 +1,6 @@
 ;Include RichEdit libs
-#Include cGUI.ahk
-#Include cRichEdit.ahk
+;#Include cGUI.ahk
+;#Include cRichEdit.ahk
 
 ;Initialize Internal Global Variables
 ServerWindowPID = 0
