@@ -1,6 +1,6 @@
 ;Include RichEdit libs
-;#Include cGUI.ahk
-;#Include cRichEdit.ahk
+#Include cGUI.ahk
+#Include cRichEdit.ahk
 
 ;Initialize Internal Global Variables
 ServerWindowPID = 0
@@ -33,10 +33,10 @@ Gui, Add, GroupBox, x10 y30 w700, Console Input
 Gui, Add, Edit, xp+10 yp+20 w620 vConsoleInput
 Gui, Add, Button, xp+630 yp-5 Default, Submit
 
-;Gui, Add, Picture, x10 y85 w700 h275 HwndREparent1
-;cGUI("1:Add:" . REparent1, ConsoleBox, 0, 0, 700, 275, "RichEdit20W")
+Gui, Add, Picture, x10 y85 w700 h275 HwndREparent1
+cGUI("1:Add:" . REparent1, ConsoleBox, 0, 0, 700, 275, "RichEdit20A")
 ;cRichEdit(ConsoleBox, "ReadOnly")
-Gui, Add, Edit, xp-640 yp+40 W700 ReadOnly r20 vConsoleBox
+;Gui, Add, Edit, xp-640 yp+40 W700 ReadOnly r20 vConsoleBox
 
 Gui, Add, Button, x10, Start Server
 Gui, Add, Button, yp xp+75, Warn Restart
@@ -116,7 +116,6 @@ Gui, Add, Text, x322 yp+30, Enter the times, at which automated restarts will wa
 Gui, Add, Edit, x322 yp+45 w280 -multi vWarningTimes, %WarningTimes%
 Gui, Add, Text, x322 yp+30, Amount of time to tell players to wait to reconnect:`n (This will be added to the current warning's time)`n (In seconds)
 Gui, Add, Edit, xp+235 yp-3 w30 number -multi vTimeToReconnect, %TimeToReconnect%
-;Debugging: Gui, Add, Edit, x322 yp+40 w40 vServerWindowPID, %ServerWindowPID%
 
 Gui, Show, Restore, %WindowTitle%
 
@@ -169,6 +168,7 @@ ServerStopTimer:
     Process, Close, ServerWindowPID
   }
 return
+
 
 WaitForRestartTimer:
   If (!ServerIsRunning())
@@ -264,7 +264,7 @@ InitializeVariables()
   FileGetSize, LogSize, server.log
   FileLine = 1
   LogFilePointer = 0
-  GuiControl,, ConsoleBox, 
+  ;GuiControl,, ConsoleBox, 
 }
 
 
@@ -500,6 +500,7 @@ SetServerStartTime()
 StartServer()
 {
   Global MCServerJar
+  Global Consolebox
   
   if (MCServerJar != "Set this")
   {
@@ -539,18 +540,21 @@ StartServer()
         Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
         InitializeLog()
         WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID%
-        GuiControl,, ConsoleBox,
+        cRichEdit(ConsoleBox, "ReplaceSel", "")
+        ;GuiControl,, ConsoleBox,
         SetTimer, ServerRunningTimer, %UpdateRate%
       }
       else
       {
-        GuiControl,, ConsoleBox, Your paths are not set up properly, please make corrections in GUI Config before continuing.
+        cRichEdit(ConsoleBox, "ReplaceSel", "Your paths are not set up properly, please make corrections in GUI Config before continuing.")
+        ;GuiControl,, ConsoleBox, Your paths are not set up properly, please make corrections in GUI Config before continuing.
       }
     }
   }
   else
   {
-    GuiControl,, ConsoleBox, Please take a look at the Server Configuration...  You must specify the MC Server Jar file.
+    cRichEdit(ConsoleBox, "ReplaceSel", "Please take a look at the Server Configuration...  You must specify the MC Server Jar file.")
+    ;GuiControl,, ConsoleBox, Please take a look at the Server Configuration...  You must specify the MC Server Jar file.
   }
 }
 
@@ -568,7 +572,10 @@ StopServer()
   }
   else
   {
-    GuiControl,, ConsoleBox, Server is not running!
+    Global ConsoleBox
+    
+    cRichEdit(ConsoleBox, "ReplaceSel", "Server is not running!")
+    ;GuiControl,, ConsoleBox, Server is not running!
   }
 }
 
@@ -580,13 +587,15 @@ SendServer(textline = "")
   ServerRunning := ServerIsRunning()
   If (ServerRunning != 0)
   {
-    ;SetKeyDelay, -1, -1
     ControlSend,,%textline%, ahk_id %ServerWindowID%
     ControlSend,,{Enter}, ahk_id %ServerWindowID%
   }
   else
   {
-    GuiControl,, ConsoleBox, Server is not running!
+    Global ConsoleBox
+    
+    cRichEdit(ConsoleBox, "ReplaceSel", "Server is not running!")
+    ;GuiControl,, ConsoleBox, Server is not running!
   }
 }
 
@@ -626,7 +635,12 @@ BackupWorld(world = "world")
 {
   Global MCServerPath
   Global MCBackupPath
+  Global ConsoleBox
   
+  ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
+  cRichEdit(ConsoleBox, "ReplaceSel", "Backing up " . world . "...`n`r" . OldConsole)
+  ;GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
+  ;GuiControl,, ConsoleBox, Backing up %world%...`n`r%OldConsole%
 	SetWorkingDir, %MCServerPath%
   FileGetTime, filetime, %MCServerPath%\%world%
   FormatTime, newfiletime, filetime, yyyyMMddHHmmss
@@ -635,8 +649,10 @@ BackupWorld(world = "world")
   FileCopyDir, %MCServerPath%\%world%, %filename%
   IfExist, %filename%
   {
-    GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
-    GuiControl,, ConsoleBox, %world% backed up successfully.`n`r%OldConsole%
+    ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
+    cRichEdit(ConsoleBox, "ReplaceSel", world . " backed up succesfully!`n`r" . OldConsole)
+    ;GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
+    ;GuiControl,, ConsoleBox, %world% backed up successfully!`n`r%OldConsole%
   }
 }
 
@@ -645,7 +661,12 @@ BackupLog()
 {
   Global MCServerPath
   Global MCBackupPath
+  Global ConsoleBox
   
+  ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
+  cRichEdit(ConsoleBox, "ReplaceSel", "Backing up server.log...`n`r" . OldConsole)
+  ;GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
+  ;GuiControl,, ConsoleBox, Backing up server.log...`n`r%OldConsole%
 	SetWorkingDir, %MCServerPath%
   FileGetTime, filetime, %MCServerPath%\server.log
   FormatTime, newfiletime, filetime, yyyyMMddHHmmss
@@ -656,8 +677,10 @@ BackupLog()
   {
     FileDelete, %MCServerPath%\server.log
     FileAppend, ,%MCServerPath%\server.log
-    GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
-    GuiControl,, ConsoleBox, server.log backed up successfully.`n`r%OldConsole%
+    ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
+    cRichEdit(ConsoleBox, "ReplaceSel", "server.log backed up succesfully!`n`r" . OldConsole)
+    ;GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
+    ;GuiControl,, ConsoleBox, server.log backed up succesfully!`n`r%OldConsole%
   }
 }
 
@@ -668,11 +691,13 @@ InitializeLog()
   Global MCServerPath
   Global LogFilePointer
   Global ServerStartDateTime
+  Global ConsoleBox
    
   TempDir = %A_WorkingDir%
   SetWorkingDir, %MCServerPath%
   
-  GuiControl,, ConsoleBox, Initializing console readout... If this takes a while, consider backing up your logs...
+  cRichEdit(ConsoleBox, "ReplaceSel", "Initializing console readout... If this takes a while, consider backing up your logs...")
+  ;GuiControl,, ConsoleBox, Initializing console readout... If this takes a while, consider backing up your logs...
   Sleep 1000
   FileGetVersion, trash, %Temp%                     ;"Refreshes" the log file... Not sure if necessary
   LogFile := FileOpen("server.log", "r")            ;Open the log file
@@ -744,7 +769,10 @@ GetLog()
 
 ParseLogIntake(ByRef Line)
 {
-  GuiControlGet, OldConsole,, ConsoleBox            ;Retrieves what's already in the console
+  Global ConsoleBox
+  
+  ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
+  ;GuiControlGet, OldConsole,, ConsoleBox            ;Retrieves what's already in the console
   /*
   INFO_TagExists := InStr(Line, "[INFO]")
   If (INFO_TagExists)
@@ -760,12 +788,14 @@ ParseLogIntake(ByRef Line)
   else
   {
   */
-    GuiControl,, ConsoleBox, %Line%%OldConsole%     ;Adds new data to the top of current contents
+  cRichEdit(ConsoleBox, "SETTEXT", Line)
+  ;GuiControl,, ConsoleBox, %Line%%OldConsole%     ;Adds new data to the top of current contents
   ; }
 }
 
 
-GetProcessMemory_PeakWorkingSet(ProcID, Units="K") {
+GetProcessMemory_PeakWorkingSet(ProcID, Units="K") 
+{
   Process, Exist, %ProcID%
   pid := Errorlevel
 
@@ -789,7 +819,8 @@ GetProcessMemory_PeakWorkingSet(ProcID, Units="K") {
 }
 
 
-GetProcessMemory_WorkingSet(ProcID, Units="K") {
+GetProcessMemory_WorkingSet(ProcID, Units="K") 
+{
   Process, Exist, %ProcID%
   pid := Errorlevel
 
@@ -1096,8 +1127,10 @@ return
 
 
 GuiClose:
-  GuiControlGet, OldConsole,, ConsoleBox
-  GuiControl,, ConsoleBox, [GUI]Stopping Server First`n`r%OldConsole%
+  ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
+  cRichEdit(ConsoleBox, "ReplaceSel", "[GUI]Stopping server first...`n`r" . OldConsole)
+  ;GuiControlGet, OldConsole,, ConsoleBox
+  ;GuiControl,, ConsoleBox, [GUI]Stopping Server First`n`r%OldConsole%
   StopServer()
   ExitApp
 return

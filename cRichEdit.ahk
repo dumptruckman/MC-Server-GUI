@@ -554,11 +554,11 @@ Much more to come soon...
 _action	= 
 *****************************************************************************************
 */
-  Else If _action = ReadOnly
+  Else If _action = 
   { 
-    DllCall("user32.dll\SendMessage", "UInt", _ctrlID, "UInt", 0x44d, "UInt", 0x0002, "UInt", 0x00000800)
 
-    Return
+
+  Return
   }
 /* 
 *****************************************************************************************
