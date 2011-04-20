@@ -1,6 +1,5 @@
-;Include RichEdit libs
-#Include cGUI.ahk
-#Include cRichEdit.ahk
+;Include RichEdit lib
+#Include RichEdit.ahk
 
 ;Initialize Internal Global Variables
 ServerWindowPID = 0
@@ -20,23 +19,24 @@ ServerProperties := ReadServerProps()
 ;Pre GUI Phase
 
 
-
-;Set up GUI
-
+/*
+*************
+* GUI SETUP *
+*************
+*/
 Gui, Add, Tab2, w900 Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
-Gui, Add, Text, xp+835 yp, Version .3.5
+Gui, Add, Text, xp+835 yp, Version .4.0
 
 Gui, Tab, Main Window
 
-Gui, Add, GroupBox, x10 y30 w700, Console Input
+Gui, Add, Picture, x10 y30 w700 h275 HwndREparent1
+ConsoleBox := RichEdit_Add(REParent1, 0, 0, 700, 275, "READONLY VSCROLL MULTILINE")
+RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
+
+Gui, Add, GroupBox, x10 y305 w700, Console Input
 Gui, Add, Edit, xp+10 yp+20 w620 vConsoleInput
 Gui, Add, Button, xp+630 yp-5 Default, Submit
-
-Gui, Add, Picture, x10 y85 w700 h275 HwndREparent1
-cGUI("1:Add:" . REparent1, ConsoleBox, 0, 0, 700, 275, "RichEdit20A")
-;cRichEdit(ConsoleBox, "ReadOnly")
-;Gui, Add, Edit, xp-640 yp+40 W700 ReadOnly r20 vConsoleBox
 
 Gui, Add, Button, x10, Start Server
 Gui, Add, Button, yp xp+75, Warn Restart
@@ -117,20 +117,33 @@ Gui, Add, Edit, x322 yp+45 w280 -multi vWarningTimes, %WarningTimes%
 Gui, Add, Text, x322 yp+30, Amount of time to tell players to wait to reconnect:`n (This will be added to the current warning's time)`n (In seconds)
 Gui, Add, Edit, xp+235 yp-3 w30 number -multi vTimeToReconnect, %TimeToReconnect%
 
+Gui, Add, GroupBox, x614 y30 w300 h200, Colors
+Gui, Add, Text, x624 y53, All colors must be in RRGGBB format
+Gui, Add, Text, x624 yp+20, Console Background:
+Gui, Add, Edit, xp+105 yp-3 vBGColor, %BGColor%
+Gui, Add, Text, x624 yp+25, Console Text:
+Gui, Add, Edit, xp+67 yp-3 vTextColor, %TextColor%
+
 Gui, Show, Restore, %WindowTitle%
 
 
 
-;Main Phase
-
+/*
+**************
+* MAIN PHASE *
+**************
+*/
 SetTimer, MainTimer, 250
 SetTimer, RestartScheduler, 1000
 return
 
 
 
-;Timers
-
+/*
+**********
+* TIMERS *
+**********
+*/
 MainTimer:
   MainProcess()
 return
@@ -205,12 +218,16 @@ return
 
 
 
-;Functions
-
+/*
+*************
+* FUNCTIONS *
+*************
+*/
 ;Main Process that runs at %UpdateRate% intervals
 MainProcess()
 {
   Global ServerWindowPID
+  Global ConsoleBox
   
   If (ServerIsRunning())
   {
@@ -264,7 +281,6 @@ InitializeVariables()
   FileGetSize, LogSize, server.log
   FileLine = 1
   LogFilePointer = 0
-  ;GuiControl,, ConsoleBox, 
 }
 
 
@@ -298,6 +314,13 @@ InitializeConfig()
     WriteWorlds("world")
     WorldList := "world"
   }
+  BGColor := GetConfigKey("Colors", "BGColor", "FFFFFF")
+  TextColor := GetConfigKey("Colors", "TextColor", "000000")
+  Tag := Array("INFO", "WARNING", "SEVERE")
+  TagColors := Object("INFO", "", "WARNING", "", "SEVERE", "")
+  TagColors["INFO"] := GetConfigKey("Colors", "INFO", "FFFF66")
+  TagColors["WARNING"] := GetConfigKey("Colors", "WARNING", "FF9900")
+  TagColors["SEVERE"] := GetConfigKey("Colors", "SEVERE", "FF0000")
 }
 
 
@@ -500,7 +523,6 @@ SetServerStartTime()
 StartServer()
 {
   Global MCServerJar
-  Global Consolebox
   
   if (MCServerJar != "Set this")
   {
@@ -539,22 +561,19 @@ StartServer()
         SetServerStartTime()
         Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
         InitializeLog()
-        WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID%
-        cRichEdit(ConsoleBox, "ReplaceSel", "")
-        ;GuiControl,, ConsoleBox,
+        WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
+        ReplaceText()
         SetTimer, ServerRunningTimer, %UpdateRate%
       }
       else
       {
-        cRichEdit(ConsoleBox, "ReplaceSel", "Your paths are not set up properly, please make corrections in GUI Config before continuing.")
-        ;GuiControl,, ConsoleBox, Your paths are not set up properly, please make corrections in GUI Config before continuing.
+        ReplaceText("Your paths are not set up properly, please make corrections in GUI Config before continuing.")
       }
     }
   }
   else
   {
-    cRichEdit(ConsoleBox, "ReplaceSel", "Please take a look at the Server Configuration...  You must specify the MC Server Jar file.")
-    ;GuiControl,, ConsoleBox, Please take a look at the Server Configuration...  You must specify the MC Server Jar file.
+    ReplaceText("Please take a look at the Server Configuration...  You must specify the MC Server Jar file.")
   }
 }
 
@@ -571,11 +590,8 @@ StopServer()
     SetTimer, ServerStopTimer, 1000
   }
   else
-  {
-    Global ConsoleBox
-    
-    cRichEdit(ConsoleBox, "ReplaceSel", "Server is not running!")
-    ;GuiControl,, ConsoleBox, Server is not running!
+  {  
+    ReplaceText("Server is not running!")
   }
 }
 
@@ -592,10 +608,7 @@ SendServer(textline = "")
   }
   else
   {
-    Global ConsoleBox
-    
-    cRichEdit(ConsoleBox, "ReplaceSel", "Server is not running!")
-    ;GuiControl,, ConsoleBox, Server is not running!
+    ReplaceText("Server is not running!")
   }
 }
 
@@ -635,12 +648,8 @@ BackupWorld(world = "world")
 {
   Global MCServerPath
   Global MCBackupPath
-  Global ConsoleBox
   
-  ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
-  cRichEdit(ConsoleBox, "ReplaceSel", "Backing up " . world . "...`n`r" . OldConsole)
-  ;GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
-  ;GuiControl,, ConsoleBox, Backing up %world%...`n`r%OldConsole%
+  AddText("`nBacking up " . world . "...")
 	SetWorkingDir, %MCServerPath%
   FileGetTime, filetime, %MCServerPath%\%world%
   FormatTime, newfiletime, filetime, yyyyMMddHHmmss
@@ -649,10 +658,7 @@ BackupWorld(world = "world")
   FileCopyDir, %MCServerPath%\%world%, %filename%
   IfExist, %filename%
   {
-    ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
-    cRichEdit(ConsoleBox, "ReplaceSel", world . " backed up succesfully!`n`r" . OldConsole)
-    ;GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
-    ;GuiControl,, ConsoleBox, %world% backed up successfully!`n`r%OldConsole%
+    AddText("Complete!")
   }
 }
 
@@ -663,10 +669,7 @@ BackupLog()
   Global MCBackupPath
   Global ConsoleBox
   
-  ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
-  cRichEdit(ConsoleBox, "ReplaceSel", "Backing up server.log...`n`r" . OldConsole)
-  ;GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
-  ;GuiControl,, ConsoleBox, Backing up server.log...`n`r%OldConsole%
+  AddText("`nBacking up server.log...")
 	SetWorkingDir, %MCServerPath%
   FileGetTime, filetime, %MCServerPath%\server.log
   FormatTime, newfiletime, filetime, yyyyMMddHHmmss
@@ -677,10 +680,7 @@ BackupLog()
   {
     FileDelete, %MCServerPath%\server.log
     FileAppend, ,%MCServerPath%\server.log
-    ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
-    cRichEdit(ConsoleBox, "ReplaceSel", "server.log backed up succesfully!`n`r" . OldConsole)
-    ;GuiControlGet, OldConsole,, ConsoleBox              ;Retrieves what's already in the console
-    ;GuiControl,, ConsoleBox, server.log backed up succesfully!`n`r%OldConsole%
+    AddText("Complete!")
   }
 }
 
@@ -691,13 +691,11 @@ InitializeLog()
   Global MCServerPath
   Global LogFilePointer
   Global ServerStartDateTime
-  Global ConsoleBox
    
   TempDir = %A_WorkingDir%
   SetWorkingDir, %MCServerPath%
   
-  cRichEdit(ConsoleBox, "ReplaceSel", "Initializing console readout... If this takes a while, consider backing up your logs...")
-  ;GuiControl,, ConsoleBox, Initializing console readout... If this takes a while, consider backing up your logs...
+  ReplaceText("Initializing console readout... If this takes a while, consider backing up your logs...")
   Sleep 1000
   FileGetVersion, trash, %Temp%                     ;"Refreshes" the log file... Not sure if necessary
   LogFile := FileOpen("server.log", "r")            ;Open the log file
@@ -769,28 +767,37 @@ GetLog()
 
 ParseLogIntake(ByRef Line)
 {
+  Global Tag
+  Global TagColors
+  Global TextColor
   Global ConsoleBox
-  
-  ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
-  ;GuiControlGet, OldConsole,, ConsoleBox            ;Retrieves what's already in the console
-  /*
-  INFO_TagExists := InStr(Line, "[INFO]")
-  If (INFO_TagExists)
+
+  Loop
   {
-    beforeTag := SubStr(Line, 1, (INFO_TagExists + 1))
-    afterTag := SubStr(Line, (INFO_TagExists + 5))
-    GuiControl,, ConsoleBox, %afterTag%%OldConsole%
-    GuiControlGet, OldConsole,, ConsoleBox
-    Gui, Font, cOlive wBold,
-    GuiControl, Font, ConsoleBox
-    GuiControl,, ConsoleBox, Running
+    TagInLine := InStr(Line, Tag[A_INDEX])
+    If (TagInLine)
+    {
+      LengthOfTag := StrLen(Tag[A_INDEX])
+
+      beforeTag := SubStr(Line, 1, (TagInLine - 1))
+      afterTag := SubStr(Line, (TagInLine + LengthOfTag))
+      
+      AddText(beforeTag)
+      AddText(Tag[A_Index], TagColors[Tag[A_Index]])
+      AddText(afterTag)
+      
+      RichEdit_LineScroll(ConsoleBox,,2)
+      return
+    }
+    If (A_INDEX = Tags.MaxIndex())
+    {
+      break
+    }
   }
-  else
-  {
-  */
-  cRichEdit(ConsoleBox, "SETTEXT", Line)
-  ;GuiControl,, ConsoleBox, %Line%%OldConsole%     ;Adds new data to the top of current contents
-  ; }
+  AddText(Line)
+  
+  RichEdit_LineScroll(ConsoleBox,,2)
+  return
 }
 
 
@@ -888,9 +895,219 @@ AutomaticRestart()
 }
 
 
+GUIUpdate()
+{
+  Global
+  GuiControlGet, ThisTab,, ThisTab
+  If (ThisTab = "Main Window")
+  {
+    WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
+    Gui, Submit, NoHide
+    GuiControl,, WorldBackupsMainWindow, %WorldBackups%
+  }
+  if (ThisTab = "GUI Config")
+  {
+    MCServerPath := GetConfigKey("Folders", "ServerPath") 
+    GuiControl,, MCServerPath, %MCServerPath%
+    
+    MCBackupPath := GetConfigKey("Folders", "BackupPath") 
+    GuiControl,, MCBackupPath, %MCBackupPath%
 
-;Buttons
+    JavaExec := GetConfigKey("Exec", "JavaExec") 
+    GuiControl,, JavaExec, %JavaExec%
 
+    MCServerArgs := GetConfigKey("Exec", "MCServerArguments") 
+    GuiControl,, MCServerArgs, %MCServerArgs%
+
+    WindowTitle := GetConfigKey("Names", "GUIWindowTitle") 
+    GuiControl,, WindowTitle, %WindowTitle%
+
+    UpdateRate := GetConfigKey("Timing", "UpdateRate")
+    GuiControl,, UpdateRate, %UpdateRate%
+
+    WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
+    GuiControl,, WorldBackups, %WorldBackups%
+
+    LogBackups := GetConfigKey("Backups", "RunLogBackups")
+    GuiControl,, LogBackups, %LogBackups%
+    
+    WorldList := ReadWorlds()
+    GuiControl,, WorldList, %WorldList%
+    
+    RestartTimes := GetConfigKey("Timing", "RestartTimes")
+    GuiControl,, RestartTimes, %RestartTimes%
+    
+    WarningTimes := GetConfigKey("Timing", "WarningTimes")
+    GuiControl,, WarningTimes, %WarningTimes%
+    
+    TimeToReconnect := GetConfigKey("Timing", "TimeToReconnect")
+    GuiControl,, TimeToReconnect, %TimeToReconnect%
+    
+    BGColor := GetConfigKey("Colors", "BGColor")
+    GuiControl,, BGColor, %BGColor%
+  }
+  if (ThisTab != "GUI Config")
+  {
+    GuiControlGet, MCServerPath,, MCServerPath
+    SetConfigKey("Folders", "ServerPath", MCServerPath) 
+
+    GuiControlGet, MCBackupPath,, MCBackupPath
+    SetConfigKey("Folders", "BackupPath", MCBackupPath) 
+
+    GuiControlGet, JavaExec,, JavaExec
+    SetConfigKey("Exec", "JavaExec", JavaExec) 
+ 
+    GuiControlGet, MCServerArgs,, MCServerArgs
+    SetConfigKey("Exec", "MCServerArguments", MCServerArgs) 
+
+    GuiControlGet, WindowTitle,, WindowTitle
+    SetConfigKey("Names", "GUIWindowTitle", WindowTitle) 
+
+    GuiControlGet, UpdateRate,, UpdateRate
+    SetConfigKey("Timing", "UpdateRate", UpdateRate)
+    SetTimer, MainTimer, Off
+    SetTimer, MainTimer, %UpdateRate%
+    
+    GuiControlGet, WorldBackups,, WorldBackups
+    SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
+ 
+    GuiControlGet, LogBackups,, LogBackups
+    SetConfigKey("Backups", "RunLogBackups", LogBackups)
+    
+    GuiControlGet, WorldList,, WorldList
+    WriteWorlds(WorldList)
+    
+    GuiControlGet, RestartTimes,, RestartTimes
+    SetConfigKey("Timing", "RestartTimes", RestartTimes)
+    
+    GuiControlGet, WarningTimes,, WarningTimes
+    SetConfigKey("Timing", "WarningTimes", WarningTimes)
+    
+    GuiControlGet, TimeToReconnect,, TimeToReconnect
+    SetConfigKey("Timing", "TimeToReconnect", TimeToReconnect)
+    
+    GuiControlGet, BGColor,, BGColor
+    SetConfigKey("Colors", "BGColor", BGColor)
+    RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
+  }
+  
+  If (ThisTab = "Server Config")
+  {
+    MCServerJar := GetConfigKey("ServerArguments", "ServerJarFile") 
+    GuiControl,, MCServerJar, %MCServerJar%
+    
+    ServerXmx := GetConfigKey("ServerArguments", "Xmx") 
+    GuiControl,, ServerXmx, %ServerXmx%
+    
+    ServerXms := GetConfigKey("ServerArguments", "Xms") 
+    GuiControl,, ServerXms, %ServerXms%
+    
+    UseConcMarkSweepGC := GetConfigKey("ServerArguments", "UseConcMarkSweepGC")
+    GuiControl,, UseConcMarkSweepGC, %UseConcMarkSweepGC%
+    
+    UseParNewGC := GetConfigKey("ServerArguments", "UseParNewGC")
+    GuiControl,, UseParNewGC, %UseParNewGC%
+    
+    CMSIncrementalPacing := GetConfigKey("ServerArguments", "CMSIncrementalPacing")
+    GuiControl,, CMSIncrementalPacing, %CMSIncrementalPacing%
+    
+    AggressiveOpts := GetConfigKey("ServerArguments", "AggressiveOpts")
+    GuiControl,, AggressiveOpts, %AggressiveOpts%
+    
+    ParallelGCThreads := GetConfigKey("ServerArguments", "ParallelGCThreads")
+    GuiControl,, ParallelGCThreads, %ParallelGCThreads%
+    
+    ExtraRunArguments := GetConfigKey("ServerArguments", "Extra")
+    GuiControl,, ExtraRunArguments, %ExtraRunArguments%
+    
+    ServerProperties := ReadServerProps()
+    GuiControl,, ServerProperties, %ServerProperties%
+  }
+  If (ThisTab != "Server Config")
+  {
+    GuiControlGet, MCServerJar,, MCServerJar
+    SetConfigKey("ServerArguments", "ServerJarFile", MCServerJar)
+    
+    GuiControlGet, ServerXmx,, ServerXmx
+    SetConfigKey("ServerArguments", "Xmx", ServerXmx)
+    
+    GuiControlGet, ServerXms,, ServerXms
+    SetConfigKey("ServerArguments", "Xms", ServerXms)
+    
+    GuiControlGet, UseConcMarkSweepGC,, UseConcMarkSweepGC
+    SetConfigKey("ServerArguments", "UseConcMarkSweepGC", UseConcMarkSweepGC)
+    
+    GuiControlGet, UseParNewGC,, UseParNewGC
+    SetConfigKey("ServerArguments", "UseParNewGC", UseParNewGC)
+    
+    GuiControlGet, CMSIncrementalPacing,, CMSIncrementalPacing
+    SetConfigKey("ServerArguments", "CMSIncrementalPacing", CMSIncrementalPacing)
+    
+    GuiControlGet, AggressiveOpts,, AggressiveOpts
+    SetConfigKey("ServerArguments", "AggressiveOpts", AggressiveOpts)
+    
+    GuiControlGet, ParallelGCThreads,, ParallelGCThreads
+    SetConfigKey("ServerArguments", "ParallelGCThreads", ParallelGCThreads)
+    
+    GuiControlGet, ExtraRunArguments,, ExtraRunArguments
+    SetConfigKey("ServerArguments", "Extra", ExtraRunArguments)
+    
+    If (!ServerIsRunning())
+    {
+      GuiControlGet, ServerProperties,, ServerProperties
+      WriteServerProps(ServerProperties)
+    }
+  }
+}
+
+
+AddText(Text, ByRef Color = "")
+{
+  Global ConsoleBox
+  
+  RichEdit_GetSel(ConsoleBox, selMin, selMax)
+  EoT := RichEdit_GetTextLength(ConsoleBox)
+  RichEdit_SetSel(ConsoleBox, EoT)
+  
+  If (Color = "")
+  {
+    Global TextColor
+    Color := TextColor
+  }
+  RichEdit_SetCharFormat(ConsoleBox,,,"0X" . Color)
+  RichEdit_SetText(ConsoleBox, Text, , -1)
+  
+  RichEdit_SetSel(ConsoleBox, selMin, selMax)
+}
+
+
+ReplaceText(Text = "", ByRef Color = "")
+{
+  Global ConsoleBox
+  
+  RichEdit_GetSel(ConsoleBox, selMin, selMax)
+  EoT := RichEdit_GetTextLength(ConsoleBox)
+  RichEdit_SetSel(ConsoleBox, EoT)
+  
+  If (Color = "")
+  {
+    Global TextColor
+    Color := TextColor
+  }
+  RichEdit_SetSel(ConsoleBox, 0, EOT)
+  RichEdit_SetText(ConsoleBox, "")
+  RichEdit_SetCharFormat(ConsoleBox,,,"0X" . Color)
+  RichEdit_SetText(ConsoleBox, Text, , -1)
+  
+  RichEdit_SetSel(ConsoleBox, selMin, selMax)
+}
+
+
+/*
+***********
+* BUTTONS *
+***********
+*/
 ButtonSubmit:
   Gui, Submit, NoHide
   GuiControlGet, ConsoleInput,, ConsoleInput
@@ -966,171 +1183,12 @@ return
 
 
 GUIUpdate:
-  GuiControlGet, ThisTab,, ThisTab
-  If (ThisTab = "Main Window")
-  {
-    WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
-    Gui, Submit, NoHide
-    GuiControl,, WorldBackupsMainWindow, %WorldBackups%
-  }
-  if (ThisTab = "GUI Config")
-  {
-    MCServerPath := GetConfigKey("Folders", "ServerPath") 
-    GuiControl,, MCServerPath, %MCServerPath%
-    
-    MCBackupPath := GetConfigKey("Folders", "BackupPath") 
-    GuiControl,, MCBackupPath, %MCBackupPath%
-
-    JavaExec := GetConfigKey("Exec", "JavaExec") 
-    GuiControl,, JavaExec, %JavaExec%
-
-    MCServerArgs := GetConfigKey("Exec", "MCServerArguments") 
-    GuiControl,, MCServerArgs, %MCServerArgs%
-
-    WindowTitle := GetConfigKey("Names", "GUIWindowTitle") 
-    GuiControl,, WindowTitle, %WindowTitle%
-
-    UpdateRate := GetConfigKey("Timing", "UpdateRate")
-    GuiControl,, UpdateRate, %UpdateRate%
-
-    WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
-    GuiControl,, WorldBackups, %WorldBackups%
-
-    LogBackups := GetConfigKey("Backups", "RunLogBackups")
-    GuiControl,, LogBackups, %LogBackups%
-    
-    WorldList := ReadWorlds()
-    GuiControl,, WorldList, %WorldList%
-    
-    RestartTimes := GetConfigKey("Timing", "RestartTimes")
-    GuiControl,, RestartTimes, %RestartTimes%
-    
-    WarningTimes := GetConfigKey("Timing", "WarningTimes")
-    GuiControl,, WarningTimes, %WarningTimes%
-    
-    TimeToReconnect := GetConfigKey("Timing", "TimeToReconnect")
-    GuiControl,, TimeToReconnect, %TimeToReconnect%
-    
-    ;Debugging: GuiControl,, ServerWindowPID, %ServerWindowPID%
-  }
-  if (ThisTab != "GUI Config")
-  {
-    GuiControlGet, MCServerPath,, MCServerPath
-    SetConfigKey("Folders", "ServerPath", MCServerPath) 
-
-    GuiControlGet, MCBackupPath,, MCBackupPath
-    SetConfigKey("Folders", "BackupPath", MCBackupPath) 
-
-    GuiControlGet, JavaExec,, JavaExec
-    SetConfigKey("Exec", "JavaExec", JavaExec) 
- 
-    GuiControlGet, MCServerArgs,, MCServerArgs
-    SetConfigKey("Exec", "MCServerArguments", MCServerArgs) 
-
-    GuiControlGet, WindowTitle,, WindowTitle
-    SetConfigKey("Names", "GUIWindowTitle", WindowTitle) 
-
-    GuiControlGet, UpdateRate,, UpdateRate
-    SetConfigKey("Timing", "UpdateRate", UpdateRate)
-    SetTimer, MainTimer, Off
-    SetTimer, MainTimer, %UpdateRate%
-    
-    GuiControlGet, WorldBackups,, WorldBackups
-    SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
- 
-    GuiControlGet, LogBackups,, LogBackups
-    SetConfigKey("Backups", "RunLogBackups", LogBackups)
-    
-    GuiControlGet, WorldList,, WorldList
-    WriteWorlds(WorldList)
-    
-    GuiControlGet, RestartTimes,, RestartTimes
-    SetConfigKey("Timing", "RestartTimes", RestartTimes)
-    
-    GuiControlGet, WarningTimes,, WarningTimes
-    SetConfigKey("Timing", "WarningTimes", WarningTimes)
-    
-    GuiControlGet, TimeToReconnect,, TimeToReconnect
-    SetConfigKey("Timing", "TimeToReconnect", TimeToReconnect)
-    
-    ;Debugging: GuiControlGet, ServerWindowPID,, ServerWindowPID
-  }
-  
-  If (ThisTab = "Server Config")
-  {
-    MCServerJar := GetConfigKey("ServerArguments", "ServerJarFile") 
-    GuiControl,, MCServerJar, %MCServerJar%
-    
-    ServerXmx := GetConfigKey("ServerArguments", "Xmx") 
-    GuiControl,, ServerXmx, %ServerXmx%
-    
-    ServerXms := GetConfigKey("ServerArguments", "Xms") 
-    GuiControl,, ServerXms, %ServerXms%
-    
-    UseConcMarkSweepGC := GetConfigKey("ServerArguments", "UseConcMarkSweepGC")
-    GuiControl,, UseConcMarkSweepGC, %UseConcMarkSweepGC%
-    
-    UseParNewGC := GetConfigKey("ServerArguments", "UseParNewGC")
-    GuiControl,, UseParNewGC, %UseParNewGC%
-    
-    CMSIncrementalPacing := GetConfigKey("ServerArguments", "CMSIncrementalPacing")
-    GuiControl,, CMSIncrementalPacing, %CMSIncrementalPacing%
-    
-    AggressiveOpts := GetConfigKey("ServerArguments", "AggressiveOpts")
-    GuiControl,, AggressiveOpts, %AggressiveOpts%
-    
-    ParallelGCThreads := GetConfigKey("ServerArguments", "ParallelGCThreads")
-    GuiControl,, ParallelGCThreads, %ParallelGCThreads%
-    
-    ExtraRunArguments := GetConfigKey("ServerArguments", "Extra")
-    GuiControl,, ExtraRunArguments, %ExtraRunArguments%
-    
-    ServerProperties := ReadServerProps()
-    GuiControl,, ServerProperties, %ServerProperties%
-  }
-  If (ThisTab != "Server Config")
-  {
-    GuiControlGet, MCServerJar,, MCServerJar
-    SetConfigKey("ServerArguments", "ServerJarFile", MCServerJar)
-    
-    GuiControlGet, ServerXmx,, ServerXmx
-    SetConfigKey("ServerArguments", "Xmx", ServerXmx)
-    
-    GuiControlGet, ServerXms,, ServerXms
-    SetConfigKey("ServerArguments", "Xms", ServerXms)
-    
-    GuiControlGet, UseConcMarkSweepGC,, UseConcMarkSweepGC
-    SetConfigKey("ServerArguments", "UseConcMarkSweepGC", UseConcMarkSweepGC)
-    
-    GuiControlGet, UseParNewGC,, UseParNewGC
-    SetConfigKey("ServerArguments", "UseParNewGC", UseParNewGC)
-    
-    GuiControlGet, CMSIncrementalPacing,, CMSIncrementalPacing
-    SetConfigKey("ServerArguments", "CMSIncrementalPacing", CMSIncrementalPacing)
-    
-    GuiControlGet, AggressiveOpts,, AggressiveOpts
-    SetConfigKey("ServerArguments", "AggressiveOpts", AggressiveOpts)
-    
-    GuiControlGet, ParallelGCThreads,, ParallelGCThreads
-    SetConfigKey("ServerArguments", "ParallelGCThreads", ParallelGCThreads)
-    
-    GuiControlGet, ExtraRunArguments,, ExtraRunArguments
-    SetConfigKey("ServerArguments", "Extra", ExtraRunArguments)
-    
-    If (!ServerIsRunning())
-    {
-      GuiControlGet, ServerProperties,, ServerProperties
-      WriteServerProps(ServerProperties)
-    }
-  }
+  GUIUpdate()
 return
 
 
 GuiClose:
-  ;OldConsole := cRichEdit(ConsoleBox, "GetText", "1")
-  cRichEdit(ConsoleBox, "ReplaceSel", "[GUI]Stopping server first...`n`r" . OldConsole)
-  ;GuiControlGet, OldConsole,, ConsoleBox
-  ;GuiControl,, ConsoleBox, [GUI]Stopping Server First`n`r%OldConsole%
+  AddText("`n[GUI]Stopping server first...")
   StopServer()
   ExitApp
 return
