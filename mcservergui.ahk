@@ -33,7 +33,7 @@ ServerProperties := ReadServerProps()
 Gui, Add, Tab2, Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
 ;Version information
-Gui, Add, Text, xp+835 yp, Version .5.0
+Gui, Add, Text, xp+835 yp, Version .5.1-alpha
 
 
 ;FIRST TAB - Main Window
@@ -56,16 +56,16 @@ GuiControl, Disable, ConsoleInput
 GuiControl, Disable, Submit
 
 ;Server Control buttons
-Gui, Add, Button, x10 gStartServer vStartServer, Start Server
-Gui, Add, Button, yp xp+75 gSaveWorlds vSaveWorlds, Save Worlds
+Gui, Add, Button, x10 Section gStartServer vStartServer, Start Server
+Gui, Add, Button, ys  gSaveWorlds vSaveWorlds, Save Worlds
 SaveWorlds_TT := "This is the same as typing save-all"
-Gui, Add, Button, yp xp+80 gWarnRestart vWarnRestart, Warn Restart
+Gui, Add, Button, ys gWarnRestart vWarnRestart, Warn Restart
 WarnRestart_TT := "This will give warnings to the players at the intervals specified in the config before restarting"
-Gui, Add, Button, yp xp+82 gImmediateRestart vImmediateRestart, Immediate Restart
+Gui, Add, Button, ys gImmediateRestart vImmediateRestart, Immediate Restart
 ImmediateRestart_TT := "This will restart the server without warning the players"
-Gui, Add, Button, yp xp+105 gStopServer vStopServer, Stop Server
+Gui, Add, Button, ys gStopServer vStopServer, Stop Server
 StopServer_TT := "This will stop the server immediately"
-Gui, Add, Button, yp xp+120 vJavaToggle gJavaToggle, Show Java Console
+Gui, Add, Button, ys xp+150 vJavaToggle gJavaToggle, Show Java Console
 JavaToggle_TT := "This will show/hide the Java Console running in the background.  This feature was added for debugging purposes and may be removed later"
 GuiControl, Disable, JavaToggle ;Disable toggle at startup
 GuiControl, Disable, SaveWorlds
@@ -117,7 +117,7 @@ Gui, Add, Edit, xp+91 yp-3 w190 -wrap -multi vExtraRunArguments, %ExtraRunArgume
 ExtraRunArguments_TT := "Put any extra server arguments here seperated by spaces.  Example -Xincgc"
 
 ;Info
-Gui, Add, Text, x20 yp+170 cRed, Once changes are complete, simply click on another tab to save.
+Gui, Add, Text, xm yp+170 cRed, Once changes are complete, simply click on another tab to save.
 
 ;Server.properties edit box
 Gui, Add, Text, x322 y30, Edit server.properties here: (Server must not be running) 
@@ -381,13 +381,13 @@ ProcessLog()
 InitializeVariables()
 {
   Global LogSize
-  Global FileLine
   Global LogFilePointer
   Global PlayerList
+  Global PreviousLogLine
   
   FileGetSize, LogSize, server.log
-  FileLine = 1
   LogFilePointer = 0
+  PreviousLogLine =
   
   If (!IsObject(PlayerList))
   {
@@ -846,6 +846,7 @@ GetLog()
 {
   Global MCServerPath
   Global LogFilePointer
+  Global PreviousLogLine
   
   TempDir = %A_WorkingDir%
   SetWorkingDir, %MCServerPath%
@@ -862,6 +863,7 @@ GetLog()
     }
     Line := LogFile.ReadLine()
     ParseLogIntake(Line)
+    PreviousLogLine := Line
   }
   LogFile.Close()
   
@@ -875,6 +877,7 @@ ParseLogIntake(ByRef Line)
   Global TagColors
   Global FontColor
   Global ConsoleBox
+  Global PreviousLogLine
 
   BeenParsed = 0
   Loop
@@ -899,7 +902,6 @@ ParseLogIntake(ByRef Line)
       break
     }
   }
-  
   If (InStr(Line, "logged in"))
   {
     If (!InStr(Line, "first time"))
@@ -929,9 +931,20 @@ ParseLogIntake(ByRef Line)
     If (!InStr(PlayerName, "/"))
     {
       RemoveFromPlayerList(PlayerName)
-      TV_Delete(PlayerList[PlayerName])
-      PlayerList.Remove(PlayerName)
     }
+  }
+  If (InStr(Line, "Connection reset"))
+  {
+    If (!InStr(PreviousLogLine, "lost connection"))
+    {
+      SendServer("list")
+    }
+  }
+  ContainsPlayerList := InStr(Line, "Connected players: ")
+  If (ContainsPlayerList)
+  {
+    ConnectedPlayers := SubStr(Line, ContainsPlayerList + StrLen(ContainsPlayerList))
+    VerifyPlayerList(ConnectedPlayers)
   }
   
   If (!BeenParsed)
@@ -940,6 +953,35 @@ ParseLogIntake(ByRef Line)
   }
   
   return
+}
+
+
+;This is to remove extra players that don't get removed properly, names contains the player list obtained from SendServer("list")
+VerifyPlayerList(ByRef Names)
+{
+  Global PlayerList
+  
+  Loop
+  {
+    If (A_Index > PlayerList.MaxIndex())
+    {
+      break
+    }
+    PlayerListIndex := A_Index
+    PlayerConnected = 0
+    Loop, Parse, Names, `,%A_Space%
+    {
+      If (PlayerList[PlayerListIndex] = A_LoopField)
+      {
+        PlayerConnected = 1
+        break
+      }
+    }
+    If (!PlayerConnected)
+    {
+      RemoveFromPlayerList(PlayerList[PlayerListIndex])
+    }
+  }
 }
 
 
@@ -958,41 +1000,10 @@ RemoveFromPlayerList(name)
       PlayerList.Remove(A_Index)
     }
   }
+  
+  TV_Delete(PlayerList[name])
+  PlayerList.Remove(name)
 }
-
-/*
-UpdatePlayerListView(Operation = "", opt1 = "")
-{
-  If (Operation = "add")
-  {
-    ErrorCheck := LV_Add("", opt1)
-    If (!ErrorCheck)
-    {
-      MsgBox, Error with LV_Add(`"`", %opt1%) in UpdatePlayerList()
-    }
-    else
-    {
-      Return %ErrorCheck%
-    }
-  }
-  If (Operation = "rm")
-  {
-    If (opt1 = "all")
-    {
-      LV_Delete()
-    }
-    else
-    {
-      ErrorCheck := LV_Delete(opt1)
-      If (!ErrorCheck)
-      {
-        MsgBox, Error with LV_Delete(%opt1%) in UpdatePlayerList()
-      }
-    }
-  }
-  return
-}
-*/
 
 
 GetProcessMemory_PeakWorkingSet(ProcID, Units="K") 
