@@ -1,7 +1,14 @@
+Version .4.0RC
+  Fixed *crosses fingers* issue where java would sometimes create multiple windows and break the GUI
+  Using Rich Edit control instead of plain old Edit, which made the following possible:
+  Text now scrolls down!
+  As such, input box is below the console box
+  Added ability to change the font face/size/color and background color
+  Also able to colorize INFO, WARNING, and SEVERE message tags
+  
 Version .3.5
   Reduced spam on server start when your log is not fresh
   Likely sped up reading of server.log
-  Very likely fixed issue where messages would not be sent to the server due to Java Console CREATING ADDITIONAL WINDOWS (Very rare)
 
 Version .3.4
   Fixed issues with folder names/locations preventing GUI from working properly
