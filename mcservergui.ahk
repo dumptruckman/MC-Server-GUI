@@ -4,10 +4,13 @@
 ;Initialize Internal Global Variables
 ServerWindowPID = 0
 ServerWindowID = 0
+Process, Exist
+GUIPID := ErrorLevel
 InitializeVariables()
 
 ;Initialize AHK Config
 DetectHiddenWindows, On
+;SetKeyDelay, -1, -1
 
 ;Initialize GUI Config Globals
 GUIPATH = %A_WorkingDir%
@@ -30,7 +33,7 @@ ServerProperties := ReadServerProps()
 Gui, Add, Tab2, Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
 ;Version information
-Gui, Add, Text, xp+835 yp, Version .5.0-Alpha
+Gui, Add, Text, xp+835 yp, Version .5.0
 
 
 ;FIRST TAB - Main Window
@@ -41,23 +44,29 @@ Gui, Add, Picture, x10 y30 w700 h275 HwndREparent1
 ConsoleBox := RichEdit_Add(REParent1, 0, 0, 700, 275, "READONLY VSCROLL MULTILINE")
 RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
 
-Gui, Add, TreeView, x715 y30 r17 w200 AltSubmit -Buttons -Lines
-LV_ModifyCol(1, 125)
-LV_ModifyCol(2, 60)
+;Player List
+Gui, Add, Text, x715 y30, Player List:
+Gui, Add, TreeView, x715 y45 r16 w200 AltSubmit -Buttons -Lines)
 
 ;Console input field + button
 Gui, Add, GroupBox, x10 y305 w700, Console Input
 Gui, Add, Edit, xp+10 yp+20 w620 vConsoleInput
 Gui, Add, Button, xp+630 yp-2 Default gSubmit vSubmit, Submit
+GuiControl, Disable, ConsoleInput
 GuiControl, Disable, Submit
 
 ;Server Control buttons
 Gui, Add, Button, x10 gStartServer vStartServer, Start Server
 Gui, Add, Button, yp xp+75 gSaveWorlds vSaveWorlds, Save Worlds
+SaveWorlds_TT := "This is the same as typing save-all"
 Gui, Add, Button, yp xp+80 gWarnRestart vWarnRestart, Warn Restart
+WarnRestart_TT := "This will give warnings to the players at the intervals specified in the config before restarting"
 Gui, Add, Button, yp xp+82 gImmediateRestart vImmediateRestart, Immediate Restart
+ImmediateRestart_TT := "This will restart the server without warning the players"
 Gui, Add, Button, yp xp+105 gStopServer vStopServer, Stop Server
+StopServer_TT := "This will stop the server immediately"
 Gui, Add, Button, yp xp+120 vJavaToggle gJavaToggle, Show Java Console
+JavaToggle_TT := "This will show/hide the Java Console running in the background.  This feature was added for debugging purposes and may be removed later"
 GuiControl, Disable, JavaToggle ;Disable toggle at startup
 GuiControl, Disable, SaveWorlds
 GuiControl, Disable, WarnRestart
@@ -66,6 +75,7 @@ GuiControl, Disable, StopServer
 
 ;Main Window backup control
 Gui, Add, CheckBox, x10 yp+30 vWorldBackupsMainWindow gWorldBackupsMainWindow, World Backups
+WorldBackupsMainWindow_TT := "Check box to enable world backups.  Uncheck to disable world backups."
 GuiControl,, WorldBackupsMainWindow, %WorldBackups%
 
 ;Memory counter text control
@@ -82,6 +92,7 @@ Gui, Add, GroupBox, x10 y30 w300 h230, Server Arguments
 Gui, Add, Text, x20 y53, Server Jar File: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCServerJar, %MCServerJar%
 Gui, Add, Button, xp+150 yp-2 gMCServerJarBrowse, Browse
+MCServerJar_TT := "Put the name of your server Jar file here.  Example: craftbukkit.jar"
 ;Xmx memory field
 Gui, Add, Text, x20 yp+30, Xmx Memory: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vServerXmx, %ServerXmx%
@@ -103,6 +114,7 @@ Gui, Add, Edit, xp+91 yp-3 w30 number -wrap -multi vParallelGCThreads, %Parallel
 ;Field for extra arguments
 Gui, Add, Text, x20 yp+27, Extra Arguments:
 Gui, Add, Edit, xp+91 yp-3 w190 -wrap -multi vExtraRunArguments, %ExtraRunArguments%
+ExtraRunArguments_TT := "Put any extra server arguments here seperated by spaces.  Example -Xincgc"
 
 ;Info
 Gui, Add, Text, x20 yp+170 cRed, Once changes are complete, simply click on another tab to save.
@@ -121,18 +133,22 @@ Gui, Add, GroupBox, x10 y30 w300 h140, Folders/Executable
 Gui, Add, Text, x20 y53, MC Server Path: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCServerPath, %MCServerPath%
 Gui, Add, Button, xp+150 yp-2 gMCServerPathBrowse, Browse
+MCServerPath_TT := "Enter the path of your minecraft server's folder"
 ;MC Backup Path field
 Gui, Add, Text, x20 yp+30, MC Backup Path: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCBackupPath, %MCBackupPath%
 Gui, Add, Button, xp+150 yp-2 gMCBackupPathBrowse, Browse
+MCBackupPath_TT := "Enter the path of the folder you'd like to store backs in"
 ;Java Executable field
 Gui, Add, Text, x20 yp+30, Java Executable: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vJavaExec, %JavaExec%
 Gui, Add, Button, xp+150 yp-2 gJavaExecutableBrowse, Browse
+JavaExec_TT := "Enter the path of your Java executable here.  You can probably leave this set to java.exe"
 
 ;Title of GUI's window
 Gui, Add, Text, x20 yp+80, GUI Window Title:
 Gui, Add, Edit, xp+90 yp-3 w195 vWindowTitle, %WindowTitle%
+WindowTitle_TT := "Enter the title of this very window!"
 
 ;Box for rate at which GUI updates the console readout of the server
 Gui, Add, Text, x20 yp+27, Update Rate: 
@@ -190,8 +206,10 @@ Gui, Show, Restore, %WindowTitle%
 * MAIN PHASE *
 **************
 */
+OnMessage(0x200, "WM_MOUSEMOVE")
 SetTimer, MainTimer, 250
 SetTimer, RestartScheduler, 1000
+SetTimer, GetCharKeyPress, 100
 return
 
 
@@ -219,6 +237,28 @@ RestartScheduler:
 return
 
 
+GetCharKeyPress:
+  IfWinActive, ahk_pid %GUIPID%
+  {
+    GuiControlGet, InputEnabled, Enabled, ConsoleInput
+    If (InputEnabled)
+    {
+      GuiControlGet, FocusedControl, Focus
+      GuiControlGet, ThisTab,, ThisTab
+      If (FocusedControl != "Edit1" and ThisTab = "Main Window")
+      {
+        Input, KeyPressed, I L1 T.1
+        If (KeyPressed)
+        {
+          ControlSend, Edit1, %KeyPressed%, A
+          GuiControl, focus, ConsoleInput
+        }
+      }
+    }
+  }
+return
+
+
 ServerStopTimer:
   If (!ServerIsRunning())
   {
@@ -236,6 +276,7 @@ ServerStopTimer:
     GuiControl, Disable, WarnRestart
     GuiControl, Disable, ImmediateRestart
     GuiControl, Disable, StopServer
+    GuiControl, Disable, ConsoleInput
     GuiControl, Disable, Submit
     GuiControl,, ServerStatus, Not Running
     Backup()
@@ -622,6 +663,16 @@ StartServer()
       InitializeVariables()
       
       GuiControl, Disable, ServerProperties
+      
+      RunThis := BuildRunLine()
+      SetServerStartTime()
+      Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
+      InitializeLog()
+      
+      ReplaceText("Waiting for Java Console to start...")
+      WinWait, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
+      WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
+      ReplaceText()
       GuiControl, Enable, JavaToggle
       GuiControl,, JavaToggle, Show Java Console
       GuiControl, Disable, StartServer
@@ -629,13 +680,9 @@ StartServer()
       GuiControl, Enable, WarnRestart
       GuiControl, Enable, ImmediateRestart
       GuiControl, Enable, StopServer
+      GuiControl, Enable, ConsoleInput
       GuiControl, Enable, Submit
-      RunThis := BuildRunLine()
-      SetServerStartTime()
-      Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
-      InitializeLog()
-      WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
-      ReplaceText()
+      
       SetTimer, ServerRunningTimer, %UpdateRate%
     }
     else
@@ -752,7 +799,7 @@ InitializeLog()
   TempDir = %A_WorkingDir%
   SetWorkingDir, %MCServerPath%
   
-  ReplaceText("Initializing console readout... If this takes a while, consider backing up your logs...")
+  ReplaceText("Initializing console readout... If this takes a while, consider deleting server.log...")
   Sleep 1000
   FileGetVersion, trash, %Temp%                     ;"Refreshes" the log file... Not sure if necessary
   LogFile := FileOpen("server.log", "r")            ;Open the log file
@@ -855,18 +902,21 @@ ParseLogIntake(ByRef Line)
   
   If (InStr(Line, "logged in"))
   {
-    Global PlayerList
-    AfterInfoTagPos := InStr(Line, "[INFO]") + 7
-    NameLength := (InStr(Line, "[/") - 1) - AfterInfoTagPos
-    PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
-    
-    ErrorCheck := PlayerList.Insert(PlayerName)
-    If (!ErrorCheck)
+    If (!InStr(Line, "first time"))
     {
-      MsgBox, Not enough memory
+      Global PlayerList
+      AfterInfoTagPos := InStr(Line, "[INFO]") + 7
+      NameLength := (InStr(Line, "[/") - 1) - AfterInfoTagPos
+      PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
+      
+      ErrorCheck := PlayerList.Insert(PlayerName)
+      If (!ErrorCheck)
+      {
+        MsgBox, Not enough memory
+      }
+      PlayerListTreeNum := TV_Add(PlayerName, "", "Sort")
+      PlayerList.Insert(PlayerName, PlayerListTreeNum)
     }
-    PlayerListTreeNum := TV_Add(PlayerName, "", "Sort")
-    PlayerList.Insert(PlayerName, PlayerListTreeNum)
   }
   PlayerQuit := InStr(Line, "lost connection")
   If (PlayerQuit)
@@ -1291,6 +1341,31 @@ ReplaceText(Text = "", ByRef Color = "")
   
   RichEdit_SetSel(ConsoleBox, selMin, selMax)
   RichEdit_LineScroll(ConsoleBox,,2)
+}
+
+
+WM_MOUSEMOVE()
+{
+    static CurrControl, PrevControl, _TT  ; _TT is kept blank for use by the ToolTip command below.
+    CurrControl := A_GuiControl
+    If (CurrControl <> PrevControl and not InStr(CurrControl, " "))
+    {
+        ToolTip  ; Turn off any previous tooltip.
+        SetTimer, DisplayToolTip, 1000
+        PrevControl := CurrControl
+    }
+    return
+
+    DisplayToolTip:
+      SetTimer, DisplayToolTip, Off
+      ToolTip % %CurrControl%_TT  ; The leading percent sign tell it to use an expression.
+      SetTimer, RemoveToolTip, 5000
+    return
+
+    RemoveToolTip:
+      SetTimer, RemoveToolTip, Off
+      ToolTip
+    return
 }
 
 

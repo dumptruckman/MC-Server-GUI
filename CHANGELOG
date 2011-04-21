@@ -1,8 +1,14 @@
+Version .5.0
+  Added basic player list
+  When Console Input doesn't have focus, typing while on the Main Window tab will give it focus
+  WAITS for Java Console to exist before trying to hook it, this SHOULD make Start Server work every time
+  Added tooltips to a lot of things in the GUI.  Try hoving your mouse over an item to get more info
+  
 Version .4.1
   Submit button works again >.>
 
 Version .4.0
-  Fixed *crosses fingers* issue where java would sometimes create multiple windows and break the GUI
+  Keeps hooked Java Console now, keep it from working fine and then suddenly not working
   Disables buttons instead of giving error messages when they can't be used
   Added Save Worlds button
   Using Rich Edit control instead of plain old Edit, which made the following possible:
