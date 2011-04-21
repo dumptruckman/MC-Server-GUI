@@ -866,7 +866,7 @@ ParseLogIntake(ByRef Line)
       MsgBox, Not enough memory
     }
     PlayerListTreeNum := TV_Add(PlayerName, "", "Sort")
-    PlayerList.Insert(PlayerName, PlayerListViewRowNum)
+    PlayerList.Insert(PlayerName, PlayerListTreeNum)
   }
   PlayerQuit := InStr(Line, "lost connection")
   If (PlayerQuit)
@@ -876,10 +876,12 @@ ParseLogIntake(ByRef Line)
     NameLength := PlayerQuit - 1 - AfterInfoTagPos
     PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
     
-    RemoveFromPlayerList(PlayerName)
-    
-    TV_Delete(PlayerList[PlayerName])
-    PlayerList.Remove(PlayerName)
+    If (!InStr(PlayerName, "/"))
+    {
+      RemoveFromPlayerList(PlayerName)
+      TV_Delete(PlayerList[PlayerName])
+      PlayerList.Remove(PlayerName)
+    }
   }
   
   If (!BeenParsed)
