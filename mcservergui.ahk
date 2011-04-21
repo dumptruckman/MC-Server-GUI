@@ -30,7 +30,7 @@ ServerProperties := ReadServerProps()
 Gui, Add, Tab2, w900 Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
 ;Version information
-Gui, Add, Text, xp+835 yp, Version .4.0RC
+Gui, Add, Text, xp+835 yp, Version .4.0
 
 
 ;FIRST TAB - Main Window

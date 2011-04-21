@@ -1,4 +1,4 @@
-Version .4.0RC
+Version .4.0
   Fixed *crosses fingers* issue where java would sometimes create multiple windows and break the GUI
   Disables buttons instead of giving error messages when they can't be used
   Added Save Worlds button
