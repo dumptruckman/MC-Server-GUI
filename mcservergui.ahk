@@ -27,10 +27,10 @@ ServerProperties := ReadServerProps()
 * GUI SETUP *
 *************
 */
-Gui, Add, Tab2, w900 Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
+Gui, Add, Tab2, Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
 ;Version information
-Gui, Add, Text, xp+835 yp, Version .4.1
+Gui, Add, Text, xp+835 yp, Version .5.0-Alpha
 
 
 ;FIRST TAB - Main Window
@@ -41,12 +41,14 @@ Gui, Add, Picture, x10 y30 w700 h275 HwndREparent1
 ConsoleBox := RichEdit_Add(REParent1, 0, 0, 700, 275, "READONLY VSCROLL MULTILINE")
 RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
 
-;Gui, Add, ListView, x715 r20 w100, Name|Size (KB)
+Gui, Add, TreeView, x715 y30 r17 w200 AltSubmit -Buttons -Lines
+LV_ModifyCol(1, 125)
+LV_ModifyCol(2, 60)
 
 ;Console input field + button
 Gui, Add, GroupBox, x10 y305 w700, Console Input
 Gui, Add, Edit, xp+10 yp+20 w620 vConsoleInput
-Gui, Add, Button, xp+630 yp-5 Default gSubmit vSubmit, Submit
+Gui, Add, Button, xp+630 yp-2 Default gSubmit vSubmit, Submit
 GuiControl, Disable, Submit
 
 ;Server Control buttons
@@ -106,7 +108,7 @@ Gui, Add, Edit, xp+91 yp-3 w190 -wrap -multi vExtraRunArguments, %ExtraRunArgume
 Gui, Add, Text, x20 yp+170 cRed, Once changes are complete, simply click on another tab to save.
 
 ;Server.properties edit box
-Gui, Add, Text, x322 y30, Edit server.properties here: (Server must not be running)
+Gui, Add, Text, x322 y30, Edit server.properties here: (Server must not be running) 
 Gui, Add, Edit, x322 yp+20 w300 r20 -wrap vServerProperties, %ServerProperties%
 
 
@@ -220,6 +222,8 @@ return
 ServerStopTimer:
   If (!ServerIsRunning())
   {
+    PlayerList.Remove(PlayerList.MinIndex(), PlayerList.MaxIndex())
+    TV_Delete()
     SetTimer, ServerStopTimer, Off
     SetTimer, ServerRunningTimer, Off
     ServerWindowPID = 0
@@ -338,10 +342,16 @@ InitializeVariables()
   Global LogSize
   Global FileLine
   Global LogFilePointer
+  Global PlayerList
   
   FileGetSize, LogSize, server.log
   FileLine = 1
   LogFilePointer = 0
+  
+  If (!IsObject(PlayerList))
+  {
+    PlayerList := Object()
+  }
 }
 
 
@@ -589,55 +599,48 @@ StartServer()
   
   if (MCServerJar != "Set this")
   {
-    If (ServerIsRunning())
+    If (VerifyPaths() = 1)
     {
-      MsgBox, Server is already running!
+      Global MCServerPath
+      Global ServerWindowPID
+      Global ServerWindowID
+      Global UpdateRate
+
+      SetWorkingDir, %MCServerPath%
+      
+      FileGetSize, LogFileSize, server.log, K
+      If (LogFileSize > 2048)
+      {
+        MsgBox, 4, Large Log File, Your log file is %LogFileSize% KB.  This is quite large.  Would you like to back it up and start a new one?  This window will time out in 10 seconds, 10
+      }
+      IfMsgBox Yes
+      {
+        BackupLog()
+        Sleep 2000
+      }
+      
+      InitializeVariables()
+      
+      GuiControl, Disable, ServerProperties
+      GuiControl, Enable, JavaToggle
+      GuiControl,, JavaToggle, Show Java Console
+      GuiControl, Disable, StartServer
+      GuiControl, Enable, SaveWorlds
+      GuiControl, Enable, WarnRestart
+      GuiControl, Enable, ImmediateRestart
+      GuiControl, Enable, StopServer
+      GuiControl, Enable, Submit
+      RunThis := BuildRunLine()
+      SetServerStartTime()
+      Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
+      InitializeLog()
+      WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
+      ReplaceText()
+      SetTimer, ServerRunningTimer, %UpdateRate%
     }
     else
     {
-      If (VerifyPaths() = 1)
-      {
-        Global MCServerPath
-        Global ServerWindowPID
-        Global ServerWindowID
-        Global UpdateRate
-
-        SetWorkingDir, %MCServerPath%
-        
-        FileGetSize, LogFileSize, server.log, K
-        If (LogFileSize > 2048)
-        {
-          MsgBox, 4, Large Log File, Your log file is %LogFileSize% KB.  This is quite large.  Would you like to back it up and start a new one?  This window will time out in 10 seconds, 10
-        }
-        IfMsgBox Yes
-        {
-          BackupLog()
-          Sleep 2000
-        }
-        
-        InitializeVariables()
-        
-        GuiControl, Disable, ServerProperties
-        GuiControl, Enable, JavaToggle
-        GuiControl,, JavaToggle, Show Java Console
-        GuiControl, Disable, StartServer
-        GuiControl, Enable, SaveWorlds
-        GuiControl, Enable, WarnRestart
-        GuiControl, Enable, ImmediateRestart
-        GuiControl, Enable, StopServer
-        GuiControl, Enable, Submit
-        RunThis := BuildRunLine()
-        SetServerStartTime()
-        Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
-        InitializeLog()
-        WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
-        ReplaceText()
-        SetTimer, ServerRunningTimer, %UpdateRate%
-      }
-      else
-      {
-        ReplaceText("Your paths are not set up properly, please make corrections in GUI Config before continuing.")
-      }
+      ReplaceText("Your paths are not set up properly, please make corrections in GUI Config before continuing.")
     }
   }
   else
@@ -652,33 +655,18 @@ StopServer()
   Global StopWait
   Global StopTimeout
  
-  If (ServerIsRunning())
-  {
-    SendServer("Stop")
-    StopTimeout = 0
-    SetTimer, ServerStopTimer, 1000
-  }
-  else
-  {  
-    ReplaceText("Server is not running!")
-  }
+  SendServer("Stop")
+  StopTimeout = 0
+  SetTimer, ServerStopTimer, 1000
 }
 
 
 SendServer(textline = "")
 {
   Global ServerWindowID
-  
-  ServerRunning := ServerIsRunning()
-  If (ServerRunning != 0)
-  {
-    ControlSend,,%textline%, ahk_id %ServerWindowID%
-    ControlSend,,{Enter}, ahk_id %ServerWindowID%
-  }
-  else
-  {
-    ReplaceText("Server is not running!")
-  }
+   
+  ControlSend,,%textline%, ahk_id %ServerWindowID%
+  ControlSend,,{Enter}, ahk_id %ServerWindowID%
 }
 
 
@@ -841,6 +829,7 @@ ParseLogIntake(ByRef Line)
   Global FontColor
   Global ConsoleBox
 
+  BeenParsed = 0
   Loop
   {
     TagInLine := InStr(Line, Tag[A_INDEX])
@@ -855,19 +844,103 @@ ParseLogIntake(ByRef Line)
       AddText(Tag[A_Index], TagColors[Tag[A_Index]])
       AddText(afterTag)
       
-      RichEdit_LineScroll(ConsoleBox,,2)
-      return
+      BeenParsed = 1
+      break
     }
     If (A_INDEX = Tags.MaxIndex())
     {
       break
     }
   }
-  AddText(Line)
   
-  RichEdit_LineScroll(ConsoleBox,,2)
+  If (InStr(Line, "logged in"))
+  {
+    Global PlayerList
+    AfterInfoTagPos := InStr(Line, "[INFO]") + 7
+    NameLength := (InStr(Line, "[/") - 1) - AfterInfoTagPos
+    PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
+    
+    ErrorCheck := PlayerList.Insert(PlayerName)
+    If (!ErrorCheck)
+    {
+      MsgBox, Not enough memory
+    }
+    PlayerListTreeNum := TV_Add(PlayerName, "", "Sort")
+    PlayerList.Insert(PlayerName, PlayerListViewRowNum)
+  }
+  PlayerQuit := InStr(Line, "lost connection")
+  If (PlayerQuit)
+  {
+    Global PlayerList
+    AfterInfoTagPos := InStr(Line, "[INFO]") + 7
+    NameLength := PlayerQuit - 1 - AfterInfoTagPos
+    PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
+    
+    RemoveFromPlayerList(PlayerName)
+    
+    TV_Delete(PlayerList[PlayerName])
+    PlayerList.Remove(PlayerName)
+  }
+  
+  If (!BeenParsed)
+  {
+    AddText(Line)
+  }
+  
   return
 }
+
+
+RemoveFromPlayerList(name)
+{
+  Global PlayerList
+  
+  loop
+  {
+    If (A_Index > PlayerList.MaxIndex())
+    {
+      break
+    }
+    If (PlayerList[A_Index] = name)
+    {
+      PlayerList.Remove(A_Index)
+    }
+  }
+}
+
+/*
+UpdatePlayerListView(Operation = "", opt1 = "")
+{
+  If (Operation = "add")
+  {
+    ErrorCheck := LV_Add("", opt1)
+    If (!ErrorCheck)
+    {
+      MsgBox, Error with LV_Add(`"`", %opt1%) in UpdatePlayerList()
+    }
+    else
+    {
+      Return %ErrorCheck%
+    }
+  }
+  If (Operation = "rm")
+  {
+    If (opt1 = "all")
+    {
+      LV_Delete()
+    }
+    else
+    {
+      ErrorCheck := LV_Delete(opt1)
+      If (!ErrorCheck)
+      {
+        MsgBox, Error with LV_Delete(%opt1%) in UpdatePlayerList()
+      }
+    }
+  }
+  return
+}
+*/
 
 
 GetProcessMemory_PeakWorkingSet(ProcID, Units="K") 
@@ -1189,6 +1262,7 @@ AddText(Text, ByRef Color = "")
   RichEdit_SetText(ConsoleBox, Text, , -1)
   
   RichEdit_SetSel(ConsoleBox, selMin, selMax)
+  RichEdit_LineScroll(ConsoleBox,,2)
 }
 
 
@@ -1214,6 +1288,7 @@ ReplaceText(Text = "", ByRef Color = "")
   RichEdit_SetText(ConsoleBox, Text, , -1)
   
   RichEdit_SetSel(ConsoleBox, selMin, selMax)
+  RichEdit_LineScroll(ConsoleBox,,2)
 }
 
 
