@@ -1,5 +1,7 @@
 Version .4.0RC
   Fixed *crosses fingers* issue where java would sometimes create multiple windows and break the GUI
+  Disables buttons instead of giving error messages when they can't be used
+  Added Save Worlds button
   Using Rich Edit control instead of plain old Edit, which made the following possible:
   Text now scrolls down!
   As such, input box is below the console box

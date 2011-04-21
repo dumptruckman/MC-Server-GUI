@@ -41,18 +41,26 @@ Gui, Add, Picture, x10 y30 w700 h275 HwndREparent1
 ConsoleBox := RichEdit_Add(REParent1, 0, 0, 700, 275, "READONLY VSCROLL MULTILINE")
 RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
 
+;Gui, Add, ListView, x715 r20 w100, Name|Size (KB)
+
 ;Console input field + button
 Gui, Add, GroupBox, x10 y305 w700, Console Input
 Gui, Add, Edit, xp+10 yp+20 w620 vConsoleInput
-Gui, Add, Button, xp+630 yp-5 Default, Submit
+Gui, Add, Button, xp+630 yp-5 Default gSubmit vSubmit, Submit
+GuiControl, Disable, Submit
 
 ;Server Control buttons
-Gui, Add, Button, x10, Start Server
-Gui, Add, Button, yp xp+75, Warn Restart
-Gui, Add, Button, yp xp+82, Immediate Restart
-Gui, Add, Button, yp xp+105, Stop Server
+Gui, Add, Button, x10 gStartServer vStartServer, Start Server
+Gui, Add, Button, yp xp+75 gSaveWorlds vSaveWorlds, Save Worlds
+Gui, Add, Button, yp xp+80 gWarnRestart vWarnRestart, Warn Restart
+Gui, Add, Button, yp xp+82 gImmediateRestart vImmediateRestart, Immediate Restart
+Gui, Add, Button, yp xp+105 gStopServer vStopServer, Stop Server
 Gui, Add, Button, yp xp+120 vJavaToggle gJavaToggle, Show Java Console
 GuiControl, Disable, JavaToggle ;Disable toggle at startup
+GuiControl, Disable, SaveWorlds
+GuiControl, Disable, WarnRestart
+GuiControl, Disable, ImmediateRestart
+GuiControl, Disable, StopServer
 
 ;Main Window backup control
 Gui, Add, CheckBox, x10 yp+30 vWorldBackupsMainWindow gWorldBackupsMainWindow, World Backups
@@ -219,6 +227,12 @@ ServerStopTimer:
     GuiControl, Disable, JavaToggle
     GuiControl, , JavaToggle, Show Java Console
     GuiControl, Enable, ServerProperties
+    GuiControl, Enable, StartServer
+    GuiControl, Disable, SaveWorlds
+    GuiControl, Disable, WarnRestart
+    GuiControl, Disable, ImmediateRestart
+    GuiControl, Disable, StopServer
+    GuiControl, Disable, Submit
     GuiControl,, ServerStatus, Not Running
     Backup()
   }
@@ -606,6 +620,12 @@ StartServer()
         GuiControl, Disable, ServerProperties
         GuiControl, Enable, JavaToggle
         GuiControl,, JavaToggle, Show Java Console
+        GuiControl, Disable, StartServer
+        GuiControl, Enable, SaveWorlds
+        GuiControl, Enable, WarnRestart
+        GuiControl, Enable, ImmediateRestart
+        GuiControl, Enable, StopServer
+        GuiControl, Disable, Submit
         RunThis := BuildRunLine()
         SetServerStartTime()
         Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
@@ -1202,7 +1222,7 @@ ReplaceText(Text = "", ByRef Color = "")
 * BUTTONS *
 ***********
 */
-ButtonSubmit:
+Submit:
   Gui, Submit, NoHide
   GuiControlGet, ConsoleInput,, ConsoleInput
   GuiControl,, ConsoleInput, 
@@ -1210,22 +1230,27 @@ ButtonSubmit:
 return
 
 
-ButtonStartServer:
+StartServer:
   StartServer()
 return
 
 
-ButtonWarnRestart:
+SaveWorlds:
+  SendServer("save-all")
+return
+
+
+WarnRestart:
   InitiateAutomaticRestart()
 return
 
 
-ButtonImmediateRestart:
+ImmediateRestart:
   AutomaticRestart()
 return
 
 
-ButtonStopServer:
+StopServer:
   StopServer()
 return
 
