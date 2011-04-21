@@ -30,7 +30,7 @@ ServerProperties := ReadServerProps()
 Gui, Add, Tab2, w900 Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 
 ;Version information
-Gui, Add, Text, xp+835 yp, Version .4.0
+Gui, Add, Text, xp+835 yp, Version .4.1
 
 
 ;FIRST TAB - Main Window
@@ -625,7 +625,7 @@ StartServer()
         GuiControl, Enable, WarnRestart
         GuiControl, Enable, ImmediateRestart
         GuiControl, Enable, StopServer
-        GuiControl, Disable, Submit
+        GuiControl, Enable, Submit
         RunThis := BuildRunLine()
         SetServerStartTime()
         Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
