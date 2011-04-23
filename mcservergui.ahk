@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".5.1"
+VersionNumber := ".5.2"
 
 ;Include RichEdit lib
 #Include RichEdit.ahk
@@ -167,6 +167,8 @@ WindowTitle_TT := "Enter the title of this very window!"
 Gui, Add, Text, x20 yp+27, Update Rate: 
 Gui, Add, Edit, xp+70 yp-3 w215 number vUpdateRate, %UpdateRate%
 Gui, Add, Text, x20 yp+22, (How often the console window is refreshed in miliseconds)
+Gui, Add, CheckBox, x20 yp+20 vServerStartOnStartup, Start Server on GUI Start
+GuiControl,, ServerStartOnStartup, %ServerStartOnStartup%
 
 ;Info
 Gui, Add, Text, xm yp+235 cRed, Once changes are complete, simply click on another tab to save.
@@ -223,6 +225,10 @@ OnMessage(0x200, "WM_MOUSEMOVE")
 SetTimer, MainTimer, 250
 SetTimer, RestartScheduler, 1000
 SetTimer, GetCharKeyPress, 100
+If (ServerStartOnStartup)
+{
+  StartServer()
+}
 return
 
 
@@ -308,7 +314,13 @@ WaitForRestartTimer:
     If (!IsBackingUp)
     {
       SetTimer, WaitForRestartTimer, Off
-      StartServer()
+      Loop
+      {
+        If (StartServer())
+        {
+          break
+        }
+      }
     }
   }
 return
@@ -450,6 +462,7 @@ InitializeConfig()
   FontFace := GetConfigKey("Font", "Face", "Roman")
   WWidth := GetConfigKey("Window", "Width", 700)
   WHeight := GetConfigKey("Window", "Height", 275)
+  ServerStartOnStartup := GetConfigKey("Other", "ServerStartOnStartup", "0")
 }
 
 
@@ -682,8 +695,16 @@ StartServer()
       Run, %RunThis%, %MCServerPath%, Hide UseErrorlevel, ServerWindowPID
       If (ErrorLevel)
       {
-        MsgBox, Error starting the server.  Windows system error code: %A_LastError%
-        return
+        SetWorkingDir, %GUIPATH%
+        ErrorLogFile := FileOpen("guierror.log", "a")
+        ErrorLogFile.WriteLine(A_YYYY . "-" . A_MM . "-" . A_DD . " " . A_Hour . ":" . A_Min . ":" . A_Sec . "  Error starting server.  Windows system error code: " . A_LastError)
+        ErrorLogFile.Close()
+        MsgBox, 5, Server Start Error, Error starting the server.  Windows system error code: %A_LastError%.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
+        IfMsgBox, Retry
+        {
+          StartServer()
+        }
+        return 0
       }
       GuiControl, Disable, ServerProperties
       ReplaceText("Waiting for Java Console to start...")
@@ -702,16 +723,19 @@ StartServer()
       GuiControl, Enable, Submit
       
       SetTimer, ServerRunningTimer, %UpdateRate%
+      return 1
     }
     else
     {
       ReplaceText("Your paths are not set up properly, please make corrections in GUI Config before continuing.")
     }
+    return 0
   }
   else
   {
     ReplaceText("Please take a look at the Server Configuration...  You must specify the MC Server Jar file.")
   }
+  return 0
 }
 
 
@@ -1186,11 +1210,13 @@ GUIUpdate()
     
     SEVEREColor := GetConfigKey("Colors", "SEVERE")
     GuiControl,, SEVEREColor, %SEVEREColor%
+    
+    ServerStartOnStartup := GetConfigKey("Other", "ServerStartOnStartup")
+    GuiControl,, ServerStartOnStartup, %ServerStartOnStartup%
   }
   if (ThisTab != "GUI Config")
   {
-    ;GuiControlGet, MCServerPath,, MCServerPath
-    SetConfigKey("Folders", "ServerPath", MCServerPath) 
+    ;GuiControlGet, MCServerPath,, MCServerPath 
 
     GuiControlGet, MCBackupPath,, MCBackupPath
     SetConfigKey("Folders", "BackupPath", MCBackupPath) 
@@ -1251,6 +1277,9 @@ GUIUpdate()
     GuiControlGet, SEVEREColor,, SEVEREColor
     SetConfigKey("Colors", "SEVERE", SEVEREColor)
     TagColors["SEVERE"] := SEVEREColor
+    
+    GuiControlGet, ServerStartOnStartup,, ServerStartOnStartup
+    SetConfigKey("Other", "ServerStartOnStartup", ServerStartOnStartup)
   }
   
   If (ThisTab = "Server Config")
@@ -1289,6 +1318,7 @@ GUIUpdate()
   {
     GuiControlGet, MCServerJar,, MCServerJar
     SetConfigKey("ServerArguments", "ServerJarFile", MCServerJar)
+    SetConfigKey("Folders", "ServerPath", MCServerPath)
     
     GuiControlGet, ServerXmx,, ServerXmx
     SetConfigKey("ServerArguments", "Xmx", ServerXmx)

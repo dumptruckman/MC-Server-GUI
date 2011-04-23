@@ -1,3 +1,8 @@
+Version .5.2
+  Added option to start server on GUI startup
+  Startup errors now log to guierror.log, in addition, the message box times out in 5 seconds
+  If there is a startup error while attempting a scheduled restart, the GUI will try to start the server until it succeeds
+
 Version .5.1
   Fixed player list bug which allowed for players that have logged off to stay on the list
   Unfortunately, people with Nick Names will be tracked poorly due to this
