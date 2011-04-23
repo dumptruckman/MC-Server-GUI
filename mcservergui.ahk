@@ -1,3 +1,12 @@
+/*
+*****************
+* MC Server GUI *
+*      by       *
+*  dumptruckman *
+*****************
+*/
+VersionNumber := ".5.1"
+
 ;Include RichEdit lib
 #Include RichEdit.ahk
 
@@ -31,27 +40,31 @@ ServerProperties := ReadServerProps()
 *************
 */
 Gui, Add, Tab2, Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
+Gui, Margin, 5, 5
+;Gui, +Resize
 
 ;Version information
-Gui, Add, Text, xp+835 yp, Version .5.1-alpha
+Gui, Add, Text, xp+835 yp, Version %VersionNumber%
 
 
 ;FIRST TAB - Main Window
 Gui, Tab, Main Window
 
 ;Picture control contains RichEdit control for the "Console Box"
-Gui, Add, Picture, x10 y30 w700 h275 HwndREparent1
-ConsoleBox := RichEdit_Add(REParent1, 0, 0, 700, 275, "READONLY VSCROLL MULTILINE")
+Gui, Add, Picture, x10 y30 w%WWidth% h%WHeight% Section HwndREparent1
+ConsoleBox := RichEdit_Add(REParent1, 0, 0, WWidth, WHeight, "READONLY VSCROLL MULTILINE")
 RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
 
 ;Player List
-Gui, Add, Text, x715 y30, Player List:
-Gui, Add, TreeView, x715 y45 r16 w200 AltSubmit -Buttons -Lines)
+PLHeight := WHeight - 16
+Gui, Add, Text, ys Section, Player List:
+Gui, Add, TreeView, xs w200 h%PLHeight% AltSubmit -Buttons -Lines)
 
 ;Console input field + button
-Gui, Add, GroupBox, x10 y305 w700, Console Input
-Gui, Add, Edit, xp+10 yp+20 w620 vConsoleInput
-Gui, Add, Button, xp+630 yp-2 Default gSubmit vSubmit, Submit
+CIWidth := WWidth - 80
+Gui, Add, GroupBox, xs x10 w%WWidth%, Console Input
+Gui, Add, Edit, xp+10 yp+17 w%CIWidth% Section vConsoleInput
+Gui, Add, Button, ys yp-1 Default gSubmit vSubmit, Submit
 GuiControl, Disable, ConsoleInput
 GuiControl, Disable, Submit
 
@@ -89,35 +102,35 @@ Gui, Tab, Server Config
 ;Java Arguments box
 Gui, Add, GroupBox, x10 y30 w300 h230, Server Arguments
 ;Server Jar File Location field
-Gui, Add, Text, x20 y53, Server Jar File: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCServerJar, %MCServerJar%
-Gui, Add, Button, xp+150 yp-2 gMCServerJarBrowse, Browse
+Gui, Add, Text, x20 y53 Section, Server Jar File: 
+Gui, Add, Edit, ys yp-3 w145 -wrap -multi r1 vMCServerJar, %MCServerJar%
+Gui, Add, Button, ys yp-2 gMCServerJarBrowse, Browse
 MCServerJar_TT := "Put the name of your server Jar file here.  Example: craftbukkit.jar"
-;Xmx memory field
-Gui, Add, Text, x20 yp+30, Xmx Memory: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vServerXmx, %ServerXmx%
 ;Xms memory field
-Gui, Add, Text, x20 yp+30, Xms Memory: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi vServerXms, %ServerXms%
+Gui, Add, Text, xs Section, Xms Memory: 
+Gui, Add, Edit, ys yp-3 w60 -wrap -multi vServerXms, %ServerXms%
+;Xmx memory field
+Gui, Add, Text, ys, Xmx Memory: 
+Gui, Add, Edit, ys yp-3 w60 -wrap -multi vServerXmx, %ServerXmx%
 ;Checkboxes for various arguments
-Gui, Add, CheckBox, x20 yp+25 vUseConcMarkSweepGC, -XX:+UseConcMarkSweepGC
+Gui, Add, CheckBox, xs vUseConcMarkSweepGC, -XX:+UseConcMarkSweepGC
 GuiControl,, UseConcMarkSweepGC, %UseConcMarkSweepGC%
-Gui, Add, CheckBox, x20 yp+18 vUseParNewGC, -XX:+UseParNewGC
+Gui, Add, CheckBox, xs vUseParNewGC, -XX:+UseParNewGC
 GuiControl,, UseParNewGC, %UseParNewGC%
-Gui, Add, CheckBox, x20 yp+18 vCMSIncrementalPacing, -XX:+CMSIncrementalPacing
+Gui, Add, CheckBox, xs vCMSIncrementalPacing, -XX:+CMSIncrementalPacing
 GuiControl,, CMSIncrementalPacing, %CMSIncrementalPacing%
-Gui, Add, CheckBox, x20 yp+18 vAggressiveOpts, -XX:+AggressiveOpts
+Gui, Add, CheckBox, xs vAggressiveOpts, -XX:+AggressiveOpts
 GuiControl,, AggressiveOpts, %AggressiveOpts%
 ;ParallelGCThreads field
-Gui, Add, Text, x20 yp+20, ParallelGCThreads:
-Gui, Add, Edit, xp+91 yp-3 w30 number -wrap -multi vParallelGCThreads, %ParallelGCThreads%
+Gui, Add, Text, xs Section, ParallelGCThreads:
+Gui, Add, Edit, ys yp-3 w30 number -wrap -multi vParallelGCThreads, %ParallelGCThreads%
 ;Field for extra arguments
-Gui, Add, Text, x20 yp+27, Extra Arguments:
-Gui, Add, Edit, xp+91 yp-3 w190 -wrap -multi vExtraRunArguments, %ExtraRunArguments%
+Gui, Add, Text, xs Section, Extra Arguments:
+Gui, Add, Edit, ys yp-3 w190 -wrap -multi r1 vExtraRunArguments, %ExtraRunArguments%
 ExtraRunArguments_TT := "Put any extra server arguments here seperated by spaces.  Example -Xincgc"
 
 ;Info
-Gui, Add, Text, xm yp+170 cRed, Once changes are complete, simply click on another tab to save.
+Gui, Add, Text, xm yp+200 cRed, Once changes are complete, simply click on another tab to save.
 
 ;Server.properties edit box
 Gui, Add, Text, x322 y30, Edit server.properties here: (Server must not be running) 
@@ -128,17 +141,17 @@ Gui, Add, Edit, x322 yp+20 w300 r20 -wrap vServerProperties, %ServerProperties%
 Gui, Tab, GUI Config
 
 ;Box for file/folder information controls
-Gui, Add, GroupBox, x10 y30 w300 h140, Folders/Executable
+Gui, Add, GroupBox, x10 y30 w300 h75, Folders/Executable
 ;MC Server Path field
-Gui, Add, Text, x20 y53, MC Server Path: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCServerPath, %MCServerPath%
-Gui, Add, Button, xp+150 yp-2 gMCServerPathBrowse, Browse
-MCServerPath_TT := "Enter the path of your minecraft server's folder"
+;Gui, Add, Text, x20 y53, MC Server Path: 
+;Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCServerPath, %MCServerPath%
+;Gui, Add, Button, xp+150 yp-2 gMCServerPathBrowse, Browse
+;MCServerPath_TT := "Enter the path of your minecraft server's folder"
 ;MC Backup Path field
-Gui, Add, Text, x20 yp+30, MC Backup Path: 
+Gui, Add, Text, x20 y53, MC Backup Path: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCBackupPath, %MCBackupPath%
 Gui, Add, Button, xp+150 yp-2 gMCBackupPathBrowse, Browse
-MCBackupPath_TT := "Enter the path of the folder you'd like to store backs in"
+MCBackupPath_TT := "Enter the path of the folder you'd like to store backups in"
 ;Java Executable field
 Gui, Add, Text, x20 yp+30, Java Executable: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vJavaExec, %JavaExec%
@@ -146,7 +159,7 @@ Gui, Add, Button, xp+150 yp-2 gJavaExecutableBrowse, Browse
 JavaExec_TT := "Enter the path of your Java executable here.  You can probably leave this set to java.exe"
 
 ;Title of GUI's window
-Gui, Add, Text, x20 yp+80, GUI Window Title:
+Gui, Add, Text, x20 yp+40, GUI Window Title:
 Gui, Add, Edit, xp+90 yp-3 w195 vWindowTitle, %WindowTitle%
 WindowTitle_TT := "Enter the title of this very window!"
 
@@ -156,7 +169,7 @@ Gui, Add, Edit, xp+70 yp-3 w215 number vUpdateRate, %UpdateRate%
 Gui, Add, Text, x20 yp+22, (How often the console window is refreshed in miliseconds)
 
 ;Info
-Gui, Add, Text, x20 yp+171 cRed, Once changes are complete, simply click on another tab to save.
+Gui, Add, Text, xm yp+235 cRed, Once changes are complete, simply click on another tab to save.
 
 ;Backup information controls
 Gui, Add, GroupBox, x312 y30 w300 h335, Backups
@@ -435,6 +448,8 @@ InitializeConfig()
   FontColor := GetConfigKey("Font", "Color", "000000")
   FontSize := GetConfigKey("Font", "Size", "10")
   FontFace := GetConfigKey("Font", "Face", "Roman")
+  WWidth := GetConfigKey("Window", "Width", 700)
+  WHeight := GetConfigKey("Window", "Height", 275)
 }
 
 
@@ -650,7 +665,7 @@ StartServer()
       SetWorkingDir, %MCServerPath%
       
       FileGetSize, LogFileSize, server.log, K
-      If (LogFileSize > 2048)
+      If (LogFileSize > 1024)
       {
         MsgBox, 4, Large Log File, Your log file is %LogFileSize% KB.  This is quite large.  Would you like to back it up and start a new one?  This window will time out in 10 seconds, 10
       }
@@ -662,16 +677,19 @@ StartServer()
       
       InitializeVariables()
       
-      GuiControl, Disable, ServerProperties
-      
       RunThis := BuildRunLine()
       SetServerStartTime()
-      Run, %RunThis%, %MCServerPath%, Hide, ServerWindowPID
-      InitializeLog()
-      
+      Run, %RunThis%, %MCServerPath%, Hide UseErrorlevel, ServerWindowPID
+      If (ErrorLevel)
+      {
+        MsgBox, Error starting the server.  Windows system error code: %A_LastError%
+        return
+      }
+      GuiControl, Disable, ServerProperties
       ReplaceText("Waiting for Java Console to start...")
       WinWait, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
       WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
+      InitializeLog()
       ReplaceText()
       GuiControl, Enable, JavaToggle
       GuiControl,, JavaToggle, Show Java Console
@@ -1112,8 +1130,8 @@ GUIUpdate()
   }
   if (ThisTab = "GUI Config")
   {
-    MCServerPath := GetConfigKey("Folders", "ServerPath") 
-    GuiControl,, MCServerPath, %MCServerPath%
+    ;MCServerPath := GetConfigKey("Folders", "ServerPath") 
+    ;GuiControl,, MCServerPath, %MCServerPath%
     
     MCBackupPath := GetConfigKey("Folders", "BackupPath") 
     GuiControl,, MCBackupPath, %MCBackupPath%
@@ -1171,7 +1189,7 @@ GUIUpdate()
   }
   if (ThisTab != "GUI Config")
   {
-    GuiControlGet, MCServerPath,, MCServerPath
+    ;GuiControlGet, MCServerPath,, MCServerPath
     SetConfigKey("Folders", "ServerPath", MCServerPath) 
 
     GuiControlGet, MCBackupPath,, MCBackupPath
@@ -1432,12 +1450,12 @@ JavaToggle:
   }
 return
 
-
+/*
 MCServerPathBrowse:
   FileSelectFolder, MCServerPath, %A_ComputerName%, 3, Please locate your Minecraft Server Directory
   GuiControl,, MCServerPath, %MCServerPath%
 return
-
+*/
 
 MCBackupPathBrowse:
   FileSelectFolder, MCBackupPath, %A_ComputerName%, 3, Please select where you would like your backups stored
@@ -1452,7 +1470,7 @@ return
 
 McServerJarBrowse:
   FileSelectFile, MCServerJar,, %MCServerPath%, Select the .jar file for your server. craftbukkit.jar for example, *.jar
-  SplitPath, MCServerJar, MCServerJar
+  SplitPath, MCServerJar, MCServerJar, MCServerPath
   GuiControl,, MCServerJar, %MCServerJar%
 return
 

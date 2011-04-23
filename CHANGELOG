@@ -1,3 +1,10 @@
+Version .5.1
+  Fixed player list bug which allowed for players that have logged off to stay on the list
+  Unfortunately, people with Nick Names will be tracked poorly due to this
+  Removed MC Server Path box as the server jar file already specifies that
+  Rearranged startup process.  Added error checking.  Server start up should be much more reliable and if not, it will give you an error message and cancel the start process.
+  Making some structural changes to the GUI layout, moving towards a resizeable gui
+
 Version .5.0
   Added basic player list
   When Console Input doesn't have focus, typing while on the Main Window tab will give it focus
