@@ -1,3 +1,13 @@
+Version .5.3
+  Replaced World Backups checkbox with Manual Backup button
+  Backups only run when the server is restarted automatically, run them manually with the new Manual Backup button
+  Added a significant amount of extra error checking on the startup process
+  Removed log initialization upon finding a much simpler, more reliable method
+  Player list should be a bit more reliable.  It still needs work, however
+  Added additional error checking to backup process
+  Forced GUI to wait to start server until backups are finished.  This should have already been the case but sometimes wasn't
+  Buttons should never be disabled/enabled at improper times anymore
+
 Version .5.2
   Added option to start server on GUI startup
   Startup errors now log to guierror.log, in addition, the message box times out in 5 seconds

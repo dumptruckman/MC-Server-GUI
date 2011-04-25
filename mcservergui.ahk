@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".5.2"
+VersionNumber := ".5.3"
 
 ;Include RichEdit lib
 #Include RichEdit.ahk
@@ -70,6 +70,7 @@ GuiControl, Disable, Submit
 
 ;Server Control buttons
 Gui, Add, Button, x10 Section gStartServer vStartServer, Start Server
+Gui, Add, Button, ys gManualBackup vManualBackup, Manual Backup
 Gui, Add, Button, ys  gSaveWorlds vSaveWorlds, Save Worlds
 SaveWorlds_TT := "This is the same as typing save-all"
 Gui, Add, Button, ys gWarnRestart vWarnRestart, Warn Restart
@@ -87,13 +88,14 @@ GuiControl, Disable, ImmediateRestart
 GuiControl, Disable, StopServer
 
 ;Main Window backup control
-Gui, Add, CheckBox, x10 yp+30 vWorldBackupsMainWindow gWorldBackupsMainWindow, World Backups
-WorldBackupsMainWindow_TT := "Check box to enable world backups.  Uncheck to disable world backups."
-GuiControl,, WorldBackupsMainWindow, %WorldBackups%
+;Gui, Add, CheckBox, x10 yp+30 vWorldBackupsMainWindow gWorldBackupsMainWindow, World Backups
+;WorldBackupsMainWindow_TT := "Check box to enable world backups.  Uncheck to disable world backups."
+;GuiControl,, WorldBackupsMainWindow, %WorldBackups%
 
+
+Gui, Add, Text, yp+30 x10 w100 vServerStatus cRed Bold, Not Running
 ;Memory counter text control
-Gui, Add, Text, yp xp+120 w300 vServerMemUse, Memory Usage: NA
-Gui, Add, Text, yp xp+500 w100 vServerStatus cRed Bold, Not Running
+Gui, Add, Text, yp xp+100 w200 vServerMemUse, Memory Usage: NA
 
 
 ;SECOND TAB - SERVER CONFIG
@@ -176,22 +178,33 @@ Gui, Add, Text, xm yp+235 cRed, Once changes are complete, simply click on anoth
 ;Backup information controls
 Gui, Add, GroupBox, x312 y30 w300 h335, Backups
 ;Checkboxes for whether or not to backup worlds/log
-Gui, Add, CheckBox, x322 y53 vWorldBackups, Run World Backups
+Gui, Add, CheckBox, x322 y53 Section vWorldBackups, Run World Backups
+WorldBackups_TT := "Whether world folders will be backed up when automatically restarted or when manual backup is pressed."
 GuiControl,, WorldBackups, %WorldBackups%
-Gui, Add, CheckBox, x322 yp+20 vLogBackups, Run Log Backups (Highly Recommended)
+Gui, Add, CheckBox, xs vLogBackups, Run Log Backups
+LogBackups_TT := "Whether server.log will be backed up when automatically restarted or when manual backup is pressed."
 GuiControl,, LogBackups, %LogBackups%
 ;Names of world field
-Gui, Add, Text, x322 yp+20, Enter names of worlds below:`n  (separate each one with a comma and NO spaces)
-Gui, Add, Edit, x322 yp+35 w280 -multi vWorldList, %WorldList%
+Gui, Add, Text, xs, Enter names of worlds below:`n  (separate each one with a comma and NO spaces)
+Gui, Add, Edit, xs w280 r1 -multi vWorldList, %WorldList%
+WorldList_TT := "Example: world,nether"
 ;Restart times field
-Gui, Add, Text, x322 yp+30, Enter the time at which you would like to run automated`n restarts in HH:MM:SS (24-hour) format.  Separate each `n time by commas with NO spaces: (Leave blank for none)
-Gui, Add, Edit, x322 yp+45 w280 -multi vRestartTimes, %RestartTimes%
+Gui, Add, Text, xs, Enter the time at which you would like to run automated`n restarts in HH:MM:SS (24-hour) format.  Separate each `n time by commas with NO spaces: (Leave blank for none)
+Gui, Add, Edit, xs w280 r1 -multi vRestartTimes, %RestartTimes%
+RestartTimes_TT := "The times at which the server will restart automatically, with the below warning(s), and run backups, if enabled."
 ;Restart warning periods field
-Gui, Add, Text, x322 yp+30, Enter the times, at which automated restarts will warn the`n the server, in Seconds.  List them in descending order,`n separated by commas with NO Spaces:
-Gui, Add, Edit, x322 yp+45 w280 -multi vWarningTimes, %WarningTimes%
+Gui, Add, Text, xs, Enter the times, at which automated restarts will warn the`n the server, in Seconds.  List them in descending order,`n separated by commas with NO Spaces:
+Gui, Add, Edit, xs w280 -multi vWarningTimes, %WarningTimes%
+WarningTimes_TT := "The players will be warned at these many seconds before the server is restarted"
 ;Field for amount of time to add to the warning period to tell players to reconnect
-Gui, Add, Text, x322 yp+30, Amount of time to tell players to wait to reconnect:`n (This will be added to the current warning's time)`n (In seconds)
-Gui, Add, Edit, xp+235 yp-3 w30 number -multi vTimeToReconnect, %TimeToReconnect%
+Gui, Add, Text, xs Section, Amount of time to tell players to wait to reconnect:`n (This will be added to the current warning's time)`n (In seconds)
+Gui, Add, Edit, ys w30 number -multi vTimeToReconnect, %TimeToReconnect%
+TimeToReconnect_TT := "This amount of time will be added to the above Warning Times as an indication of when players should attempt to reconnect to your server"
+;Field for delay before restart
+Gui, Add, Text, xs Section, Delay before auto-restarting (in seconds):
+Gui, Add, Edit, ys yp-3 w40 number -multi r1 vRestartDelay, %RestartDelay%
+RestartDelay_TT := "Keep in mind, the server will wait to restart until backups are finished, if applicable."
+
 
 ;Style customization controls
 Gui, Add, GroupBox, x614 y30 w300 h200, Style Controls
@@ -251,6 +264,7 @@ return
 RestartScheduler:
   If (CheckForRestarts())
   {
+    WhatTerminated := "AUTO"
     InitiateAutomaticRestart()
   }
 return
@@ -287,18 +301,14 @@ ServerStopTimer:
     SetTimer, ServerRunningTimer, Off
     ServerWindowPID = 0
     ServerWindowID = 0
-    GuiControl, Disable, JavaToggle
-    GuiControl, , JavaToggle, Show Java Console
-    GuiControl, Enable, ServerProperties
-    GuiControl, Enable, StartServer
-    GuiControl, Disable, SaveWorlds
-    GuiControl, Disable, WarnRestart
-    GuiControl, Disable, ImmediateRestart
-    GuiControl, Disable, StopServer
-    GuiControl, Disable, ConsoleInput
-    GuiControl, Disable, Submit
+    ControlSwitcher("OFF")
     GuiControl,, ServerStatus, Not Running
-    Backup()
+    AddText("[GUI] Server Stopped`n")
+    If (WhatTerminated = "AUTO")
+    {
+      Backup()
+    }
+    AddText("[GUI] Finished`n")
   }
   StopTimeout := StopTimeout + 1
   If (StopTimeout = 60)
@@ -309,9 +319,10 @@ return
 
 
 WaitForRestartTimer:
+  SetTimer, WaitForRestartTimer, 1000
   If (!ServerIsRunning())
   {
-    If (!IsBackingUp)
+    If (IsBackingUp = 0)
     {
       SetTimer, WaitForRestartTimer, Off
       Loop
@@ -362,20 +373,22 @@ MainProcess()
   
   If (ServerIsRunning())
   {
-    Gui, Font, cGreen Bold,
-    GuiControl, Font, ServerStatus
-    GuiControl,, ServerStatus, Running
+    ControlSwitcher("ON")
     
-    PeakWorkingSet := GetProcessMemory_PeakWorkingSet(ServerWindowPID, "M")
+    ;PeakWorkingSet := GetProcessMemory_PeakWorkingSet(ServerWindowPID, "M")
+    CommitSize := GetProcessMemory_CommitSize(ServerWindowPID, "M")
     WorkingSet := GetProcessMemory_WorkingSet(ServerWindowPID, "M")
-    GuiControl,, ServerMemUse, Memory Usage: %WorkingSet% M / %PeakWorkingSet% M
+    GuiControl,, ServerMemUse, Memory Usage: %WorkingSet% M / %CommitSize% M
   }
   else
   {
-    GuiControl,, ServerMemUse, Memory Usage: NA
-    Gui, Font, cRed Bold,
-    GuiControl, Font, ServerStatus
-    GuiControl,, ServerStatus, Not Running
+    Global ServerState
+    
+    If (ServerState == "ON")
+    {
+      StopServer()
+    }
+    ControlSwitcher("OFF")
     SetTimer, ServerRunningTimer, Off
   }
 }
@@ -405,14 +418,28 @@ ProcessLog()
 ;Resets Variables to initial values
 InitializeVariables()
 {
-  Global LogSize
   Global LogFilePointer
   Global PlayerList
   Global PreviousLogLine
+  Global ServerWindowPID
+  Global ServerWindowID
+  Global ServerState
+  Global WhatTerminated
+  Global IsBackingUp
+  Global MCServerPath
   
   FileGetSize, LogSize, server.log
   LogFilePointer = 0
   PreviousLogLine =
+  ServerWindowPID = 0
+  ServerWindowID = 0
+  IsBackingUp = 0
+  ServerState := "OFF"
+  WhatTerminated := "ERROR"
+  
+  LogFile := FileOpen(MCServerPath . "\server.log", "a")
+  LogFilePointer := LogFile.Tell()
+  LogFile.Close()
   
   If (!IsObject(PlayerList))
   {
@@ -442,6 +469,7 @@ InitializeConfig()
   UpdateRate := GetConfigKey("Timing", "UpdateRate", "250")
   RestartTimes := GetConfigKey("Timing", "RestartTimes", "")
   WarningTimes := GetConfigKey("Timing", "WarningTimes", "30,15,5")
+  RestartDelay := GetConfigKey("Timing", "RestartDelay", "0")
   TimeToReconnect := GetConfigKey("Timing", "TimeToReconnect", "30")
   WorldBackups := GetConfigKey("Backups", "RunWorldBackups", "1")
   LogBackups := GetConfigKey("Backups", "RunLogBackups", "1")
@@ -653,11 +681,14 @@ ServerIsRunning()
 }
 
 
-SetServerStartTime()
+WriteErrorLog(ErrorMessage)
 {
-  Global ServerStartDateTime
-  
-  ServerStartDateTime := A_YYYY . "-" . A_MM . "-" . A_DD . " " . A_Hour . ":" . A_Min . ":" . A_Sec
+  TempDir := A_WorkingDir
+  SetWorkingDir, %GUIPATH%
+  ErrorLogFile := FileOpen("guierror.log", "a")
+  ErrorLogFile.WriteLine(A_YYYY . "-" . A_MM . "-" . A_DD . " " . A_Hour . ":" . A_Min . ":" . A_Sec . "  " . ErrorMessage)
+  ErrorLogFile.Close()
+  SetWorkingDir, %TempDir%
 }
 
 
@@ -666,85 +697,164 @@ StartServer()
 {
   Global MCServerJar
   
-  if (MCServerJar != "Set this")
+  If (MCServerJar = "Set this")             ;If not config'd
   {
-    If (VerifyPaths() = 1)
-    {
-      Global MCServerPath
-      Global ServerWindowPID
-      Global ServerWindowID
-      Global UpdateRate
+    ReplaceText("[GUI] Please take a look at the Server Configuration...  You must specify the MC Server Jar file.")
+    return 0
+  }
+  
+  If (VerifyPaths() = 0)                    ;If paths are invalid
+  {
+    ReplaceText("[GUI] Your paths are not set up properly, please make corrections in GUI Config before continuing.")
+    return 0
+  }
+  
+  If (ServerIsRunning())                    ;If server is running
+  {
+    MsgBox, Server is already running!
+    return 1      ;Special case return 1 since this should only happen if user starts server before it is automatically started.
+  }
+  
+  Global IsBackingUp                        
+  If (IsBackingUp)                          ;If backup is in progress
+  {
+    MsgBox, 0, Error, Cannot start server while backup is in progress., 5
+    return 0
+  }
+  
+  ;Grab some globals
+  Global MCServerPath
+  Global ServerWindowPID
+  Global ServerWindowID
+  Global UpdateRate
 
-      SetWorkingDir, %MCServerPath%
-      
-      FileGetSize, LogFileSize, server.log, K
-      If (LogFileSize > 1024)
-      {
-        MsgBox, 4, Large Log File, Your log file is %LogFileSize% KB.  This is quite large.  Would you like to back it up and start a new one?  This window will time out in 10 seconds, 10
-      }
-      IfMsgBox Yes
-      {
-        BackupLog()
-        Sleep 2000
-      }
-      
-      InitializeVariables()
-      
-      RunThis := BuildRunLine()
-      SetServerStartTime()
-      Run, %RunThis%, %MCServerPath%, Hide UseErrorlevel, ServerWindowPID
-      If (ErrorLevel)
-      {
-        SetWorkingDir, %GUIPATH%
-        ErrorLogFile := FileOpen("guierror.log", "a")
-        ErrorLogFile.WriteLine(A_YYYY . "-" . A_MM . "-" . A_DD . " " . A_Hour . ":" . A_Min . ":" . A_Sec . "  Error starting server.  Windows system error code: " . A_LastError)
-        ErrorLogFile.Close()
-        MsgBox, 5, Server Start Error, Error starting the server.  Windows system error code: %A_LastError%.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
-        IfMsgBox, Retry
-        {
-          StartServer()
-        }
-        return 0
-      }
-      GuiControl, Disable, ServerProperties
-      ReplaceText("Waiting for Java Console to start...")
-      WinWait, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
-      WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
-      InitializeLog()
-      ReplaceText()
-      GuiControl, Enable, JavaToggle
-      GuiControl,, JavaToggle, Show Java Console
-      GuiControl, Disable, StartServer
-      GuiControl, Enable, SaveWorlds
-      GuiControl, Enable, WarnRestart
-      GuiControl, Enable, ImmediateRestart
-      GuiControl, Enable, StopServer
-      GuiControl, Enable, ConsoleInput
-      GuiControl, Enable, Submit
-      
-      SetTimer, ServerRunningTimer, %UpdateRate%
-      return 1
-    }
-    else
+  SetWorkingDir, %MCServerPath%
+  
+  ;If the log is really large, give the user a chance to clean it up.
+  FileGetSize, LogFileSize, server.log, K
+  If (LogFileSize > 1024)
+  {
+    MsgBox, 4, Large Log File, Your log file is %LogFileSize% KB.  This is quite large.  Would you like to back it up and start a new one?  This window will time out in 10 seconds, 10
+  }
+  IfMsgBox Yes
+  {
+    IsBackingUp = 1
+    BackupLog()
+    IsBackingUp = 0
+  }
+  
+  InitializeVariables()                     ;Get variables ready for start
+  
+  RunLine := BuildRunLine()
+  
+  ;Attempt to start Java for the server
+  ReplaceText("[GUI] Starting Java...")
+  Run, %RunLine%, %MCServerPath%, Hide UseErrorlevel, ServerWindowPID
+  If (ErrorLevel)                           ;If there was a problem launching it initially, error out
+  {
+    WriteErrorLog("Error starting server.  Windows system error code: " . A_LastError)
+    MsgBox, 5, Server Start Error, Error starting the server.  Windows system error code: %A_LastError%.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
+    IfMsgBox, Retry                         ;Give user option to retry
     {
-      ReplaceText("Your paths are not set up properly, please make corrections in GUI Config before continuing.")
+      StartServer()
     }
     return 0
   }
-  else
+  Process, Wait, %ServerWindowPID%, 5         ;Waits on the process to be ready
+  If (ErrorLevel = 0)                         ;If it times out waiting or the process doesn't exist, error out
   {
-    ReplaceText("Please take a look at the Server Configuration...  You must specify the MC Server Jar file.")
+    AddText("Error.")
+    WriteErrorLog("Error starting server.  Problem starting Java.")
+    MsgBox, 5, Server Start Error, Error starting the server.  Java did not run or there was a problem starting it.  Check your configuration.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
+    IfMsgBox, Retry                         ;Give user option to retry
+    {
+      StartServer()
+    }
+    return 0
   }
-  return 0
+  
+  GuiControl, Disable, ServerProperties       ;Server has started, so disable editing of server.properties
+  ;Waits for the console window to exist
+  ReplaceText("[GUI] Waiting to hook console window...")
+  WinWait, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass, , 5
+  If (ErrorLevel)                             ;Waits 5 seconds for the window to exist and, if it doesn't or there was some other error, errors out
+  {
+    Loop                                      ;This loops ensures that it closes the Java process semi-gracefully
+    {
+      Process, Exist, %ServerWindowPID%
+      If (ErrorLevel)
+      {
+        WinClose, ahk_pid %ServerWindowPID%
+      }
+      else
+      {
+        break
+      }
+    }
+    GuiControl, Enable, ServerProperties      ;Re-enables the server.properties edit since it didn't start properly
+    AddText("Error.")
+    WriteErrorLog("Error starting server.  Could not hook Java console window.")
+    MsgBox, 5, Server Start Error, Error starting the server.  Could not hook Java console window.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
+    IfMsgBox, Retry
+    {
+      StartServer()
+    }
+    return 0
+  }
+  
+  ;Since the windows supposedly exists, attempts to hook onto it
+  WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
+  If (ServerWindowID = 0)                   ;If, for some reason, it doesn't hook the window, errors out
+  {
+    Loop                                    ;This loops ensures that it closes the Java process semi-gracefully
+    {
+      Process, Exist, %ServerWindowPID%
+      If (ErrorLevel)
+      {
+        WinClose, ahk_pid %ServerWindowPID%
+      }
+      else
+      {
+        break
+      }
+    }
+    GuiControl, Enable, ServerProperties      ;Re-enables the server.properties edit since it didn't start properly
+    AddText("Error.")
+    WriteErrorLog("Error starting server.  Could not hook Java console window.")
+    MsgBox, 5, Server Start Error, Error starting the server.  Could not hook Java console window.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
+    IfMsgBox, Retry
+    {
+      StartServer()
+    }
+    return 0
+  }
+  
+  Global ServerState
+  
+  ReplaceText()                           ;Blanks the console output box
+  ServerState := "ON"                     ;Stores the state of the server as ON
+  
+  ControlSwitcher("ON")                   ;Switches all the buttons
+  
+  SetTimer, ServerRunningTimer, %UpdateRate%      ;Start log update timer
+  
+  return 1
 }
 
 
 StopServer()
 {
-  Global StopWait
   Global StopTimeout
- 
-  SendServer("Stop")
+  Global ServerState
+  Global WhatTerminated
+  
+  SendServer("stop")
+  ServerState = "OFF"
+  If (WhatTerminated = "ERROR")
+  {
+    WriteErrorLog("Server error.  Java terminated unexpectedly.")
+    MsgBox, 0, Server Error, Java terminated unexpectedly.  Check your configuration.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
+  }
   StopTimeout = 0
   SetTimer, ServerStopTimer, 1000
 }
@@ -753,9 +863,51 @@ StopServer()
 SendServer(textline = "")
 {
   Global ServerWindowID
-   
+
   ControlSend,,%textline%, ahk_id %ServerWindowID%
   ControlSend,,{Enter}, ahk_id %ServerWindowID%
+}
+
+
+ControlSwitcher(ServerState)
+{
+  If (ServerState = "ON")
+  {
+    GuiControl, Disable, ServerProperties
+    GuiControl, Enable, JavaToggle
+    GuiControl,, JavaToggle, Show Java Console
+    GuiControl, Disable, StartServer
+    GuiControl, Disable, ManualBackup
+    GuiControl, Enable, SaveWorlds
+    GuiControl, Enable, WarnRestart
+    GuiControl, Enable, ImmediateRestart
+    GuiControl, Enable, StopServer
+    GuiControl, Enable, ConsoleInput
+    GuiControl, Enable, Submit
+    
+    Gui, Font, cGreen Bold,
+    GuiControl, Font, ServerStatus
+    GuiControl,, ServerStatus, Running
+  }
+  If (ServerState = "OFF")
+  {
+    GuiControl, Disable, JavaToggle
+    GuiControl, , JavaToggle, Show Java Console
+    GuiControl, Enable, ServerProperties
+    GuiControl, Enable, StartServer
+    GuiControl, Enable, ManualBackup
+    GuiControl, Disable, SaveWorlds
+    GuiControl, Disable, WarnRestart
+    GuiControl, Disable, ImmediateRestart
+    GuiControl, Disable, StopServer
+    GuiControl, Disable, ConsoleInput
+    GuiControl, Disable, Submit
+    
+    GuiControl,, ServerMemUse, Memory Usage: NA
+    Gui, Font, cRed Bold,
+    GuiControl, Font, ServerStatus
+    GuiControl,, ServerStatus, Not Running
+  }
 }
 
 
@@ -771,6 +923,10 @@ Backup()
   {
     BackupLog()
   } 
+  else
+  {
+    AddText("[GUI] Log backups are disabled... skipping`n")
+  }
   
   if (WorldBackups = "1")   ;Runs world backups if suppose to
   {
@@ -785,6 +941,10 @@ Backup()
       }
     }
   }
+  else
+  {
+    AddText("[GUI] World backups are disabled... skipping`n")
+  }
   
   IsBackingUp = 0
 }
@@ -795,16 +955,35 @@ BackupWorld(world = "world")
   Global MCServerPath
   Global MCBackupPath
   
-  AddText("`nBacking up " . world . "...")
+  AddText("[GUI] Backing up " . world . "...")
+  sleep 10
 	SetWorkingDir, %MCServerPath%
   FileGetTime, filetime, %MCServerPath%\%world%
+  FileGetSize, OriginalSize, %MCServerPath%\%world%
   FormatTime, newfiletime, filetime, yyyyMMddHHmmss
   newfiletime := substr(newfiletime, 1, 4) . "-" . substr(newfiletime, 5, 2) . "-" . substr(newfiletime, 7, 2) . " " . substr(newfiletime, 9, 2) . "." . substr(newfiletime, 11, 2) . "." . substr(newfiletime, 13, 2)
   filename = %MCBackupPath%\%world%%newfiletime%
   FileCopyDir, %MCServerPath%\%world%, %filename%
-  IfExist, %filename%
+  If (ErrorLevel)
   {
-    AddText("Complete!")
+    AddText("Error!`n")
+    WriteErrorLog("Error backing up world " . %world% . ".")
+  }
+  else
+  {
+    Loop
+    {
+      IfExist, %filename%
+      {
+        FileGetVersion, trash, %filename%       ;This is necessary to "refresh"
+        FileGetSize, BackupSize, %filename%
+        If (BackupSize = OriginalSize)
+        {
+          AddText("Complete!`n")
+          break
+        }
+      }
+    }
   }
 }
 
@@ -815,70 +994,38 @@ BackupLog()
   Global MCBackupPath
   Global ConsoleBox
   
-  AddText("`nBacking up server.log...")
+  AddText("[GUI] Backing up server.log...")
+  sleep 10
 	SetWorkingDir, %MCServerPath%
+  FileGetVersion, trash, %filename%         ;This is necessary to "refresh"
+  FileGetSize, OriginalSize, server.log
   FileGetTime, filetime, %MCServerPath%\server.log
   FormatTime, newfiletime, filetime, yyyyMMddHHmmss
   newfiletime := substr(newfiletime, 1, 4) . "-" . substr(newfiletime, 5, 2) . "-" . substr(newfiletime, 7, 2) . " " . substr(newfiletime, 9, 2) . "." . substr(newfiletime, 11, 2) . "." . substr(newfiletime, 13, 2)
   filename = %MCBackupPath%\%newfiletime%.log
   FileCopy, %MCServerPath%\server.log, %filename%
-  IfExist, %filename%
+  If (ErrorLevel)
   {
-    FileDelete, %MCServerPath%\server.log
-    FileAppend, ,%MCServerPath%\server.log
-    AddText("Complete!")
-  }
-}
-
-
-InitializeLog()
-{
-  ;Retrieve required globals
-  Global MCServerPath
-  Global LogFilePointer
-  Global ServerStartDateTime
-   
-  TempDir = %A_WorkingDir%
-  SetWorkingDir, %MCServerPath%
-  
-  ReplaceText("Initializing console readout... If this takes a while, consider deleting server.log...")
-  Sleep 1000
-  FileGetVersion, trash, %Temp%                     ;"Refreshes" the log file... Not sure if necessary
-  LogFile := FileOpen("server.log", "r")            ;Open the log file
-  OriginalLogContents := LogFile.Read()   ;Read the whole log into OriginalLogContents
-  LogFile.Close()                         ;Close the log file
-  
-  Position = 1
-  Loop
-  {
-    Position := InStr(OriginalLogContents, " [INFO] Starting", false, Position)     ;Find the first position of the date the server was started
-    LineDateTime := SubStr(OriginalLogContents, (Position-19), 19)
-    If (TimeIsAfter(ServerStartDateTime, LineDateTime) = 1)
-    {
-      LogFilePointer := Position - 20
-      break
-    }
-    else
-    {
-      Position := InStr(OriginalLogContents, "minecraft", false, Position)
-    }    
-  }
-  
-  SetWorkingDir, %TempDir%
-}
-
-
-TimeIsAfter(startTime, afterTime)
-{
-  startTime := substr(startTime, 1, 4) . substr(startTime, 6, 2) . substr(startTime, 9, 2) . substr(startTime, 12, 2) . substr(startTime, 15, 2) . substr(startTime, 18, 2)
-  afterTime := substr(afterTime, 1, 4) . substr(afterTime, 6, 2) . substr(afterTime, 9, 2) . substr(afterTime, 12, 2) . substr(afterTime, 15, 2) . substr(afterTime, 18, 2)
-  if (afterTime >= startTime)
-  {
-    return 1
+    AddText("Error!`n")
+    WriteErrorLog("Error backing up server.log.")
   }
   else
   {
-    return 0
+    Loop
+    {
+      IfExist, %filename%
+      {
+        FileGetVersion, trash, %filename%         ;This is necessary to "refresh"
+        FileGetSize, BackupSize, %filename%
+        If (BackupSize = OriginalSize)
+        {
+          FileDelete, %MCServerPath%\server.log
+          FileAppend, ,%MCServerPath%\server.log
+          AddText("Complete!`n")
+          break
+        }
+      }
+    }
   }
 }
 
@@ -944,15 +1091,16 @@ ParseLogIntake(ByRef Line)
       break
     }
   }
-  If (InStr(Line, "logged in"))
+  If (InStr(Line, "] logged in with entity id"))
   {
-    If (!InStr(Line, "first time"))
+    Global PlayerList
+    
+    AfterInfoTagPos := InStr(Line, "[INFO]") + 7
+    NameLength := (InStr(Line, "[/") - 1) - AfterInfoTagPos
+    PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
+    
+    If (!PlayerList[PlayerName])
     {
-      Global PlayerList
-      AfterInfoTagPos := InStr(Line, "[INFO]") + 7
-      NameLength := (InStr(Line, "[/") - 1) - AfterInfoTagPos
-      PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
-      
       ErrorCheck := PlayerList.Insert(PlayerName)
       If (!ErrorCheck)
       {
@@ -966,6 +1114,7 @@ ParseLogIntake(ByRef Line)
   If (PlayerQuit)
   {
     Global PlayerList
+    
     AfterInfoTagPos := InStr(Line, "[INFO]") + 7
     NameLength := PlayerQuit - 1 - AfterInfoTagPos
     PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
@@ -985,7 +1134,9 @@ ParseLogIntake(ByRef Line)
   ContainsPlayerList := InStr(Line, "Connected players: ")
   If (ContainsPlayerList)
   {
-    ConnectedPlayers := SubStr(Line, ContainsPlayerList + StrLen(ContainsPlayerList))
+    ConnectedPlayers := SubStr(Line, (ContainsPlayerList + 19))
+    StringReplace, ConnectedPlayers, ConnectedPlayers, `n
+    StringReplace, ConnectedPlayers, ConnectedPlayers, `r
     VerifyPlayerList(ConnectedPlayers)
   }
   
@@ -998,7 +1149,7 @@ ParseLogIntake(ByRef Line)
 }
 
 
-;This is to remove extra players that don't get removed properly, names contains the player list obtained from SendServer("list")
+;This is to remove extra players that don't get removed properly, Names contains the player list obtained from SendServer("list")
 VerifyPlayerList(ByRef Names)
 {
   Global PlayerList
@@ -1040,11 +1191,36 @@ RemoveFromPlayerList(name)
     If (PlayerList[A_Index] = name)
     {
       PlayerList.Remove(A_Index)
+      TV_Delete(PlayerList[name])
+      PlayerList.Remove(name)
+      break
     }
   }
-  
-  TV_Delete(PlayerList[name])
-  PlayerList.Remove(name)
+}
+
+
+GetProcessMemory_CommitSize(ProcID, Units="K") 
+{
+  Process, Exist, %ProcID%
+  pid := Errorlevel
+
+  ; get process handle
+  hProcess := DllCall( "OpenProcess", UInt, 0x10|0x400, Int, false, UInt, pid )
+
+  ; get memory info
+  PROCESS_MEMORY_COUNTERS_EX := VarSetCapacity(memCounters, 44, 0)
+  DllCall( "psapi.dll\GetProcessMemoryInfo", UInt, hProcess, UInt, &memCounters, UInt, PROCESS_MEMORY_COUNTERS_EX )
+  DllCall( "CloseHandle", UInt, hProcess )
+
+  SetFormat, Float, 0.0 ; round up K
+
+  PrivateBytes := NumGet(memCounters, 40, "UInt")
+  if (Units == "B")
+      return PrivateBytes
+  if (Units == "K")
+      Return PrivateBytes / 1024
+  if (Units == "M")
+      Return PrivateBytes / 1024 / 1024
 }
 
 
@@ -1135,10 +1311,13 @@ InitiateAutomaticRestart()
 
 
 AutomaticRestart()
-{
+{  
+  Global RestartDelay
+  
   SendServer("save-all")
   StopServer()
-  SetTimer, WaitForRestartTimer, 1000
+  Temp := RestartDelay * 1000
+  SetTimer, WaitForRestartTimer, %Temp%
 }
 
 
@@ -1148,9 +1327,9 @@ GUIUpdate()
   GuiControlGet, ThisTab,, ThisTab
   If (ThisTab = "Main Window")
   {
-    WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
-    Gui, Submit, NoHide
-    GuiControl,, WorldBackupsMainWindow, %WorldBackups%
+    ;WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
+    ;Gui, Submit, NoHide
+    ;GuiControl,, WorldBackupsMainWindow, %WorldBackups%
   }
   if (ThisTab = "GUI Config")
   {
@@ -1183,6 +1362,9 @@ GUIUpdate()
     
     RestartTimes := GetConfigKey("Timing", "RestartTimes")
     GuiControl,, RestartTimes, %RestartTimes%
+    
+    RestartDelay := GetConfigKey("Timing", "RestartDelay")
+    GuiControl,, RestartDelay, %RestartDelay%
     
     WarningTimes := GetConfigKey("Timing", "WarningTimes")
     GuiControl,, WarningTimes, %WarningTimes%
@@ -1252,6 +1434,9 @@ GUIUpdate()
     
     GuiControlGet, TimeToReconnect,, TimeToReconnect
     SetConfigKey("Timing", "TimeToReconnect", TimeToReconnect)
+    
+    GuiControlGet, RestartDelay,, RestartDelay
+    SetConfigKey("Timing", "RestartDelay", RestartDelay)
     
     GuiControlGet, BGColor,, BGColor
     SetConfigKey("Colors", "BGColor", BGColor)
@@ -1437,12 +1622,27 @@ Submit:
   Gui, Submit, NoHide
   GuiControlGet, ConsoleInput,, ConsoleInput
   GuiControl,, ConsoleInput, 
-  SendServer(ConsoleInput)
+  If (ConsoleInput = "stop")
+  {
+    WhatTerminated := "USER"
+    StopServer()
+  }
+  else
+  {
+    SendServer(ConsoleInput)
+  }
 return
 
 
 StartServer:
   StartServer()
+return
+
+
+ManualBackup:
+  GuiControl, Disable, ManualBackup
+  Backup()
+  GuiControl, Enable, ManualBackup
 return
 
 
@@ -1452,16 +1652,19 @@ return
 
 
 WarnRestart:
+  WhatTerminated := "USER"
   InitiateAutomaticRestart()
 return
 
 
 ImmediateRestart:
+  WhatTerminated := "USER"
   AutomaticRestart()
 return
 
 
 StopServer:
+  WhatTerminated := "USER"
   StopServer()
 return
 
@@ -1480,12 +1683,6 @@ JavaToggle:
   }
 return
 
-/*
-MCServerPathBrowse:
-  FileSelectFolder, MCServerPath, %A_ComputerName%, 3, Please locate your Minecraft Server Directory
-  GuiControl,, MCServerPath, %MCServerPath%
-return
-*/
 
 MCBackupPathBrowse:
   FileSelectFolder, MCBackupPath, %A_ComputerName%, 3, Please select where you would like your backups stored
@@ -1505,11 +1702,11 @@ McServerJarBrowse:
 return
 
 
-WorldBackupsMainWindow:
-  Gui, Submit, NoHide
-  GuiControlGet, WorldBackups,, WorldBackupsMainWindow
-  SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
-return
+;WorldBackupsMainWindow:
+;  Gui, Submit, NoHide
+;  GuiControlGet, WorldBackups,, WorldBackupsMainWindow
+;  SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
+;return
 
 
 GUIUpdate:
@@ -1518,7 +1715,11 @@ return
 
 
 GuiClose:
-  AddText("`n[GUI]Stopping server first...")
-  StopServer()
+  If(ServerIsRunning())
+  {
+    WhatTerminated := "USER"
+    AddText("`n[GUI]Stopping server first...")
+    StopServer()
+  }
   ExitApp
 return
