@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".5.4"
+VersionNumber := ".5.5"
 
 ;Include RichEdit lib
 #Include RichEdit.ahk
@@ -468,6 +468,20 @@ InitializeVariables()
   {
     PlayerList := Object()
   }
+  else
+  {
+    Index := PlayerList.MaxIndex()
+    Loop
+    {
+      PlayerList.Remove(PlayerList[Index])
+      PlayerList.Remove(Index)
+      If (Index <= 1)
+      {
+        break
+      }
+      Index := Index - 1
+    }
+  }
 }
 
 
@@ -898,7 +912,7 @@ SendServer(textline = "")
 {
   Global ServerWindowID
 
-  ControlSend,,%textline%, ahk_id %ServerWindowID%
+  ControlSendRaw,,%textline%, ahk_id %ServerWindowID%
   ControlSend,,{Enter}, ahk_id %ServerWindowID%
 }
 

@@ -1,3 +1,7 @@
+Version .5.5
+  Now able to send exclamation marks to the server!
+  Possible fix for players sometimes not showing up in the list
+
 Version .5.4
   Lowered default font size to 8
   Added player list right-click menu.  Kick and ban people with just a couple clicks!
