@@ -1,0 +1,17 @@
+Todo list for MC Server GUI in no specific order:
+
+Ability to give players items by right clicking name in player list
+Plugin list with possible integration with plugman
+Compatibility with many other plugins (mcMMO or iConomy for instance)
+Server file manipulation (like installing/configuring plugins)
+More Error Checking
+Resizeable GUI
+Minimize to tray
+CPU information
+Network monitor
+CPU and RAM info for the GUI itself
+Archive the backups
+Display seconds >60 as minutes
+Extra restart messages?
+Customizable restart messages
+Full, archived, backups of server (plugins and all)
