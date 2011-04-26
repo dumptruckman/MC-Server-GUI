@@ -1,4 +1,14 @@
+Version .5.4
+  Lowered default font size to 8
+  Added player list right-click menu.  Kick and ban people with just a couple clicks!
+  Fix for Show Java Console button
+  Added console output right-click menu.  You can now easily copy text from the console output!
+  Added checkbox to default console input to "say" mode
+  Optionally you can press shift+enter to send in "say" mode
+  Added option to always show Java console
+
 Version .5.3
+  Memory now displays current usage / max allowed
   Replaced World Backups checkbox with Manual Backup button
   Backups only run when the server is restarted automatically, run them manually with the new Manual Backup button
   Added a significant amount of extra error checking on the startup process

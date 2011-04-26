@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".5.3"
+VersionNumber := ".5.4"
 
 ;Include RichEdit lib
 #Include RichEdit.ahk
@@ -51,19 +51,21 @@ Gui, Add, Text, xp+835 yp, Version %VersionNumber%
 Gui, Tab, Main Window
 
 ;Picture control contains RichEdit control for the "Console Box"
-Gui, Add, Picture, x10 y30 w%WWidth% h%WHeight% Section HwndREparent1
+Gui, Add, Picture, x10 y30 w%WWidth% h%WHeight% Section vConsoleBox HwndREparent1
 ConsoleBox := RichEdit_Add(REParent1, 0, 0, WWidth, WHeight, "READONLY VSCROLL MULTILINE")
 RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
 
 ;Player List
 PLHeight := WHeight - 16
 Gui, Add, Text, ys Section, Player List:
-Gui, Add, TreeView, xs w200 h%PLHeight% AltSubmit -Buttons -Lines)
+Gui, Add, TreeView, xs w200 h%PLHeight% vPlayerList AltSubmit -Buttons -Lines
 
 ;Console input field + button
-CIWidth := WWidth - 80
+CIWidth := WWidth - 115
 Gui, Add, GroupBox, xs x10 w%WWidth%, Console Input
-Gui, Add, Edit, xp+10 yp+17 w%CIWidth% Section vConsoleInput
+Gui, Add, CheckBox, xp+10 yp+21 Section vSayToggle, Say
+Gui, Add, Edit, ys yp-4 w%CIWidth% vConsoleInput
+ConsoleInput_TT := "Press shift+enter to 'say' to the server"
 Gui, Add, Button, ys yp-1 Default gSubmit vSubmit, Submit
 GuiControl, Disable, ConsoleInput
 GuiControl, Disable, Submit
@@ -144,11 +146,6 @@ Gui, Tab, GUI Config
 
 ;Box for file/folder information controls
 Gui, Add, GroupBox, x10 y30 w300 h75, Folders/Executable
-;MC Server Path field
-;Gui, Add, Text, x20 y53, MC Server Path: 
-;Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCServerPath, %MCServerPath%
-;Gui, Add, Button, xp+150 yp-2 gMCServerPathBrowse, Browse
-;MCServerPath_TT := "Enter the path of your minecraft server's folder"
 ;MC Backup Path field
 Gui, Add, Text, x20 y53, MC Backup Path: 
 Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCBackupPath, %MCBackupPath%
@@ -169,11 +166,15 @@ WindowTitle_TT := "Enter the title of this very window!"
 Gui, Add, Text, x20 yp+27, Update Rate: 
 Gui, Add, Edit, xp+70 yp-3 w215 number vUpdateRate, %UpdateRate%
 Gui, Add, Text, x20 yp+22, (How often the console window is refreshed in miliseconds)
+;Option to start server on gui startup
 Gui, Add, CheckBox, x20 yp+20 vServerStartOnStartup, Start Server on GUI Start
 GuiControl,, ServerStartOnStartup, %ServerStartOnStartup%
+;Option to always show java console
+Gui, Add, CheckBox, x20 yp+20 vAlwaysShowJavaConsole, Always show Java console (Starts minimized)
+GuiControl,, AlwaysShowJavaConsole, %AlwaysShowJavaConsole%
 
 ;Info
-Gui, Add, Text, xm yp+235 cRed, Once changes are complete, simply click on another tab to save.
+Gui, Add, Text, xm yp+195 cRed, Once changes are complete, simply click on another tab to save.
 
 ;Backup information controls
 Gui, Add, GroupBox, x312 y30 w300 h335, Backups
@@ -226,6 +227,28 @@ Gui, Add, Edit, xp+80 yp-3 vSEVEREColor, % TagColors["SEVERE"]
 
 ;SHOW DAS GUI
 Gui, Show, Restore, %WindowTitle%
+
+
+
+/*
+********************
+* Player List Menu *
+********************
+*/
+Menu, ItemCategories, add, Test
+Menu, PlayerListMenu, add, Kick, PL_Kick
+Menu, PlayerListMenu, add, Ban, PL_Ban
+;Menu, PlayerListMenu, add, Ban-IP, PL_BanIP
+;Menu, PlayerListMenu, add, Give, :ItemCategories
+
+
+
+/*
+*******************
+* ConsoleBox Menu *
+*******************
+*/
+Menu, ConsoleBoxMenu, add, Copy, ConsoleCopy
 
 
 
@@ -486,11 +509,14 @@ InitializeConfig()
   TagColors["WARNING"] := GetConfigKey("Colors", "WARNING", "FF9933")
   TagColors["SEVERE"] := GetConfigKey("Colors", "SEVERE", "FF0000")
   FontColor := GetConfigKey("Font", "Color", "000000")
-  FontSize := GetConfigKey("Font", "Size", "10")
+  FontSize := GetConfigKey("Font", "Size", "8")
   FontFace := GetConfigKey("Font", "Face", "Roman")
   WWidth := GetConfigKey("Window", "Width", 700)
   WHeight := GetConfigKey("Window", "Height", 275)
+  SetConfigKey("Window", "Width", 700)
+  SetConfigKey("Window", "Height", 275)
   ServerStartOnStartup := GetConfigKey("Other", "ServerStartOnStartup", "0")
+  AlwaysShowJavaConsole := GetConfigKey("Other", "AlwaysShowJavaConsole", "0")
 }
 
 
@@ -727,6 +753,7 @@ StartServer()
   Global ServerWindowPID
   Global ServerWindowID
   Global UpdateRate
+  Global AlwaysShowJavaConsole
 
   SetWorkingDir, %MCServerPath%
   
@@ -749,7 +776,14 @@ StartServer()
   
   ;Attempt to start Java for the server
   ReplaceText("[GUI] Starting Java...")
-  Run, %RunLine%, %MCServerPath%, Hide UseErrorlevel, ServerWindowPID
+  If (AlwaysShowJavaConsole)
+  {
+    Run, %RunLine%, %MCServerPath%, Min UseErrorlevel, ServerWindowPID
+  }
+  else
+  {
+    Run, %RunLine%, %MCServerPath%, Hide UseErrorlevel, ServerWindowPID
+  }
   If (ErrorLevel)                           ;If there was a problem launching it initially, error out
   {
     WriteErrorLog("Error starting server.  Windows system error code: " . A_LastError)
@@ -871,11 +905,19 @@ SendServer(textline = "")
 
 ControlSwitcher(ServerState)
 {
+  Global AlwaysShowJavaConsole
   If (ServerState = "ON")
   {
+    GuiControl, Disable, AlwaysShowJavaConsole
+    If (AlwaysShowJavaConsole)
+    {
+      GuiControl, Disable, JavaToggle
+    }
+    else
+    {
+      GuiControl, Enable, JavaToggle
+    }
     GuiControl, Disable, ServerProperties
-    GuiControl, Enable, JavaToggle
-    GuiControl,, JavaToggle, Show Java Console
     GuiControl, Disable, StartServer
     GuiControl, Disable, ManualBackup
     GuiControl, Enable, SaveWorlds
@@ -891,6 +933,7 @@ ControlSwitcher(ServerState)
   }
   If (ServerState = "OFF")
   {
+    GuiControl, Enable, AlwaysShowJavaConsole
     GuiControl, Disable, JavaToggle
     GuiControl, , JavaToggle, Show Java Console
     GuiControl, Enable, ServerProperties
@@ -1093,28 +1136,15 @@ ParseLogIntake(ByRef Line)
   }
   If (InStr(Line, "] logged in with entity id"))
   {
-    Global PlayerList
-    
     AfterInfoTagPos := InStr(Line, "[INFO]") + 7
     NameLength := (InStr(Line, "[/") - 1) - AfterInfoTagPos
     PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
     
-    If (!PlayerList[PlayerName])
-    {
-      ErrorCheck := PlayerList.Insert(PlayerName)
-      If (!ErrorCheck)
-      {
-        MsgBox, Not enough memory
-      }
-      PlayerListTreeNum := TV_Add(PlayerName, "", "Sort")
-      PlayerList.Insert(PlayerName, PlayerListTreeNum)
-    }
+    AddToPlayerList(PlayerName)
   }
   PlayerQuit := InStr(Line, "lost connection")
   If (PlayerQuit)
   {
-    Global PlayerList
-    
     AfterInfoTagPos := InStr(Line, "[INFO]") + 7
     NameLength := PlayerQuit - 1 - AfterInfoTagPos
     PlayerName := SubStr(Line, AfterInfoTagPos, NameLength)
@@ -1178,7 +1208,7 @@ VerifyPlayerList(ByRef Names)
 }
 
 
-RemoveFromPlayerList(name)
+RemoveFromPlayerList(PlayerName)
 {
   Global PlayerList
   
@@ -1188,13 +1218,30 @@ RemoveFromPlayerList(name)
     {
       break
     }
-    If (PlayerList[A_Index] = name)
+    If (PlayerList[A_Index] = PlayerName)
     {
       PlayerList.Remove(A_Index)
-      TV_Delete(PlayerList[name])
-      PlayerList.Remove(name)
+      TV_Delete(PlayerList[PlayerName])
+      PlayerList.Remove(PlayerName)
       break
     }
+  }
+}
+
+
+AddToPlayerList(PlayerName)
+{
+  Global PlayerList
+  
+  If (!PlayerList[PlayerName])
+  {
+    ErrorCheck := PlayerList.Insert(PlayerName)
+    If (!ErrorCheck)
+    {
+      MsgBox, Not enough memory to add player
+    }
+    PlayerListTreeNum := TV_Add(PlayerName, "", "Sort")
+    PlayerList.Insert(PlayerName, PlayerListTreeNum)
   }
 }
 
@@ -1395,6 +1442,9 @@ GUIUpdate()
     
     ServerStartOnStartup := GetConfigKey("Other", "ServerStartOnStartup")
     GuiControl,, ServerStartOnStartup, %ServerStartOnStartup%
+    
+    AlwaysShowJavaConsole := GetConfigKey("Other", "AlwaysShowJavaConsole")
+    GuiControl,, AlwaysShowJavaConsole, %AlwaysShowJavaConsole%
   }
   if (ThisTab != "GUI Config")
   {
@@ -1465,6 +1515,9 @@ GUIUpdate()
     
     GuiControlGet, ServerStartOnStartup,, ServerStartOnStartup
     SetConfigKey("Other", "ServerStartOnStartup", ServerStartOnStartup)
+    
+    GuiControlGet, AlwaysShowJavaConsole,, AlwaysShowJavaConsole
+    SetConfigKey("Other", "AlwaysShowJavaConsole", AlwaysShowJavaConsole)
   }
   
   If (ThisTab = "Server Config")
@@ -1622,7 +1675,13 @@ Submit:
   Gui, Submit, NoHide
   GuiControlGet, ConsoleInput,, ConsoleInput
   GuiControl,, ConsoleInput, 
-  If (ConsoleInput = "stop")
+  GuiControlGet, SayOn,, SayToggle
+  ShiftIsDown := GetKeyState("Shift")
+  If ((SayOn) or (ShiftIsDown))
+  {
+    SendServer("say " . ConsoleInput)
+  }
+  else If (ConsoleInput = "stop")
   {
     WhatTerminated := "USER"
     StopServer()
@@ -1702,6 +1761,56 @@ McServerJarBrowse:
 return
 
 
+GuiContextMenu:
+  If (A_GuiControl = "PlayerList")
+  {
+    If (A_EventInfo)
+    {
+      Menu, PlayerListMenu, Show, %A_GuiX%, %A_GuiY%
+    }
+  }
+  If (A_GuiControl = "ConsoleBox")
+  {
+    Menu, ConsoleBoxMenu, Show, %A_GuiX%, %A_GuiY%
+  }
+return
+
+PL_Kick:
+  PlayerListSelection := TV_GetSelection()
+  TV_GetText(PlayerName, PlayerListSelection)
+  SendServer("kick " . PlayerName)
+  RemoveFromPlayerList(PlayerName)
+return
+
+
+PL_Ban:
+  PlayerListSelection := TV_GetSelection()
+  TV_GetText(PlayerName, PlayerListSelection)
+  SendServer("ban " . PlayerName)
+  RemoveFromPlayerList(PlayerName)
+return
+
+/*
+PL_BanIP:
+  PlayerListSelection := TV_GetSelection()
+  TV_GetText(PlayerName, PlayerListSelection)
+  SendServer("ban-ip " . PlayerName)
+  RemoveFromPlayerList(PlayerName)
+return
+*/
+
+PL_Give:
+  
+return
+
+Test:
+
+return
+
+
+ConsoleCopy:
+  RichEdit_Copy(ConsoleBox)
+return
 ;WorldBackupsMainWindow:
 ;  Gui, Submit, NoHide
 ;  GuiControlGet, WorldBackups,, WorldBackupsMainWindow
