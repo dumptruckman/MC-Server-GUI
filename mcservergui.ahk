@@ -7,8 +7,9 @@
 */
 VersionNumber := ".5.6-dev"
 
-;Include RichEdit lib
+;Include Libraries
 #Include RichEdit.ahk
+#Include Anchor.ahk
 
 ;Initialize Internal Global Variables
 ServerWindowPID = 0
@@ -19,7 +20,6 @@ InitializeVariables()
 
 ;Initialize AHK Config
 DetectHiddenWindows, On
-;SetKeyDelay, -1, -1
 
 ;Initialize GUI Config Globals
 GUIPATH = %A_WorkingDir%
@@ -51,67 +51,85 @@ ServerProperties := ReadServerProps()
 */
 Gui, Add, Tab2, Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 Gui, Margin, 5, 5
-;Gui, +Resize
-
-;Version information
-Gui, Add, Text, xp+835 yp, Version %VersionNumber%
+Gui, +Resize +MinSize
 
 
 ;FIRST TAB - Main Window
 Gui, Tab, Main Window
 
 ;Picture control contains RichEdit control for the "Console Box"
-Gui, Add, Picture, x10 y30 w%WWidth% h%WHeight% Section vConsoleBox HwndREparent1
-ConsoleBox := RichEdit_Add(REParent1, 0, 0, WWidth, WHeight, "READONLY VSCROLL MULTILINE")
+Gui, Add, GroupBox, x10 y30 w700 h275 Section vConsoleOutput, Console Output
+Gui, Add, Picture, xp+10 yp+15 w680 h250 vConsoleBox HwndREparent1
+ConsoleBox := RichEdit_Add(REParent1, 0, 0, 680, 250, "READONLY VSCROLL MULTILINE")
 RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
 
 ;Player List
-PLHeight := WHeight - 16
-Gui, Add, Text, ys Section, Player List:
-Gui, Add, TreeView, xs w200 h%PLHeight% vPlayerList AltSubmit -Buttons -Lines
+
+Gui, Add, GroupBox, ys Section w200 h275, Player List
+Gui, Add, TreeView, xp+10 yp+15 w180 h250 vPlayerList AltSubmit -Buttons -Lines
 
 ;Console input field + button
-CIWidth := WWidth - 115
-Gui, Add, GroupBox, xs x10 w%WWidth%, Console Input
+Gui, Add, GroupBox, xs x10 w700 h50, Console Input
 Gui, Add, CheckBox, xp+10 yp+21 Section vSayToggle, Say
-Gui, Add, Edit, ys yp-4 w%CIWidth% vConsoleInput
+Gui, Add, Edit, ys yp-4 w585 vConsoleInput
 ConsoleInput_TT := "Press shift+enter to 'say' to the server"
 Gui, Add, Button, ys yp-1 Default gSubmit vSubmit, Submit
 GuiControl, Disable, ConsoleInput
 GuiControl, Disable, Submit
 
 ;Server Control buttons
-Gui, Add, Button, x10 Section gStartServer vStartServer, Start Server
-Gui, Add, Button, ys gManualBackup vManualBackup, Manual Backup
-Gui, Add, Button, ys  gSaveWorlds vSaveWorlds, Save Worlds
-SaveWorlds_TT := "This is the same as typing save-all"
-Gui, Add, Button, ys gWarnRestart vWarnRestart, Warn Restart
+Gui, Add, GroupBox, x10 w200 h75 vServerControlBox, Server Control
+Gui, Add, Button, xp+10 yp+15 w87 Section gStartStopServer vStartStopServer, Start Server
+StartStopServer_TT := "Press this button to start your server!"
+Gui, Add, Button, ys w87 gBackupSave vBackupSave, Manual Backup
+BackupSave_TT := "Pressing this will backup the world folders specified in GUI Config"
+;Gui, Add, Button, ys  gSaveWorlds vSaveWorlds, Save Worlds
+;SaveWorlds_TT := "This is the same as typing save-all"
+Gui, Add, Button, xs Section gWarnRestart vWarnRestart, Warn Restart
 WarnRestart_TT := "This will give warnings to the players at the intervals specified in the config before restarting"
 Gui, Add, Button, ys gImmediateRestart vImmediateRestart, Immediate Restart
 ImmediateRestart_TT := "This will restart the server without warning the players"
-Gui, Add, Button, ys gStopServer vStopServer, Stop Server
-StopServer_TT := "This will stop the server immediately"
-Gui, Add, Button, ys xp+150 vJavaToggle gJavaToggle, Show Java Console
-JavaToggle_TT := "This will show/hide the Java Console running in the background.  This feature was added for debugging purposes and may be removed later"
-GuiControl, Disable, JavaToggle ;Disable toggle at startup
-GuiControl, Disable, SaveWorlds
+;Gui, Add, Button, ys gStopServer vStopServer, Stop Server
+;StopServer_TT := "This will stop the server immediately"
+;Gui, Add, Button, ys xp+150 vJavaToggle gJavaToggle, Show Java Console
+;JavaToggle_TT := "This will show/hide the Java Console running in the background.  This feature was added for debugging purposes and may be removed later"
+;GuiControl, Disable, JavaToggle ;Disable toggle at startup
+;GuiControl, Disable, SaveWorlds
 GuiControl, Disable, WarnRestart
 GuiControl, Disable, ImmediateRestart
-GuiControl, Disable, StopServer
+;GuiControl, Disable, StopServer
 
-;Main Window backup control
-;Gui, Add, CheckBox, x10 yp+30 vWorldBackupsMainWindow gWorldBackupsMainWindow, World Backups
-;WorldBackupsMainWindow_TT := "Check box to enable world backups.  Uncheck to disable world backups."
-;GuiControl,, WorldBackupsMainWindow, %WorldBackups%
-
-
-Gui, Add, Text, yp+30 x10 w100 vServerStatus cRed Bold, Not Running
+;Server Info
+GuiControlGet, GUIPos, Pos, ServerControlBox
+GUIPosX := GUIPosX + GUIPosW + 5
+Gui, Add, GroupBox, y%GUIPosY% x%GUIPosX% w200 h75 vServerInfoBox, Server Information
+;Server running indicator
+Gui, Add, Text, yp+15 xp+10 Section, Status: 
+Gui, Add, Text, ys w80 vServerStatus cRed Bold, Not Running
 ;Memory counter text control
-Gui, Add, Text, yp xp+100 w200 vServerMemUse, Memory Usage: NA
+Gui, Add, Text, xs w180 vServerMemUse, Memory Usage: NA
+;CPU Load indicator
+Gui, Add, Text, xs w150 vServerCPUUse, CPU Load: NA
 
-Gui, Add, Text, xs Section, Bytes per second: 
-Gui, Add, Text, w140 vBytesRxPerSecond, Loading...
-Gui, Add, Text, w140 vBytesTxPerSecond, Loading...
+;GUI Info
+GuiControlGet, GUIPos, Pos, ServerInfoBox
+GUIPosX := GUIPosX + GUIPosW + 5
+Gui, Add, GroupBox, y%GUIPosY% x%GUIPosX% w130 h75 vGUIInfoBox, GUI Information
+;Version Information
+Gui, Add, Text, yp+15 xp+10 Section, Version %VersionNumber%
+;Memory counter text control
+Gui, Add, Text, xs w110 vGUIMemUse, Memory Usage: NA
+;CPU Load indicator
+Gui, Add, Text, xs w110 vGUICPUUse, CPU Load: NA
+
+;Network Info
+GuiControlGet, GUIPos, Pos, GUIInfoBox
+GUIPosX := GUIPosX + GUIPosW + 5
+Gui, Add, GroupBox, y%GUIPosY% x%GUIPosX% w155 h75 vNetworkInfoBox, Network Information
+Gui, Add, Text, yp+15 xp+10 Section, Receiving: 
+Gui, Add, Text, ys w100 vBytesRxPerSecond, Loading...
+Gui, Add, Text, xs Section, Transmitting: 
+Gui, Add, Text, ys w100 vBytesTxPerSecond, Loading...
 
 
 ;SECOND TAB - SERVER CONFIG
@@ -148,7 +166,7 @@ Gui, Add, Edit, ys yp-3 w190 -wrap -multi r1 vExtraRunArguments, %ExtraRunArgume
 ExtraRunArguments_TT := "Put any extra server arguments here seperated by spaces.  Example -Xincgc"
 
 ;Info
-Gui, Add, Text, xm yp+200 cRed, Once changes are complete, simply click on another tab to save.
+Gui, Add, Text, xm y430 cRed, Once changes are complete, simply click on another tab to save..
 
 ;Server.properties edit box
 Gui, Add, Text, x322 y30, Edit server.properties here: (Server must not be running) 
@@ -188,7 +206,7 @@ Gui, Add, CheckBox, x20 yp+20 vAlwaysShowJavaConsole, Always show Java console (
 GuiControl,, AlwaysShowJavaConsole, %AlwaysShowJavaConsole%
 
 ;Info
-Gui, Add, Text, xm yp+195 cRed, Once changes are complete, simply click on another tab to save.
+Gui, Add, Text, xm y430 cRed, Once changes are complete, simply click on another tab to save..
 
 ;Backup information controls
 Gui, Add, GroupBox, x312 y30 w300 h335, Backups
@@ -240,6 +258,7 @@ Gui, Add, Text, x624 yp+25, [SEVERE] Color:
 Gui, Add, Edit, xp+80 yp-3 vSEVEREColor, % TagColors["SEVERE"]
 
 ;SHOW DAS GUI
+;Gui, +Resize +MinSize
 Gui, Show, Restore, %WindowTitle%
 
 
@@ -406,30 +425,31 @@ NetworkMonitor:
   BytesDataRx := SubStr(BytesData, 1, InStr(BytesData, " "))
   BytesDataTx := SubStr(BytesData, InStr(BytesData, " "))
   BytesDataTx = %BytesDataTx%
-  ;This is wrong >.< Fix it!
-  If (BytesDataRx < 1024)
+  DisplayBytesRx := BytesDataRx - LastBytesDataRx
+  DisplayBytesTx := BytesDataTx - LastBytesDataTx
+  If (DisplayBytesRx < 1024)
   {
-    DisplayBytesRx := BytesDataRx - LastBytesDataRx . " B/s"
+    DisplayBytesRx := DisplayBytesRx . " B/s"
   }
-  If ((BytesDataRx >= 1024) and (BytesDataRx < 1048576))
+  else If ((DisplayBytesRx >= 1024) and (DisplayBytesRx < 1048576))
   {
-    DisplayBytesRx := (BytesDataRx - LastBytesDataRx)/1024 . " KB/s"
+    DisplayBytesRx := (DisplayBytesRx / 1024) . " KB/s"
   }
-  If (BytesDataRx >= 1048576)
+  else If (DisplayBytesRx >= 1048576)
   {
-    DisplayBytesRx := (BytesDataRx - LastBytesDataRx)/1048576 . " MB/s"
+    DisplayBytesRx := (DisplayBytesRx / 1048576) . " MB/s"
   }
-  If (BytesDataTx < 1024)
+  If (DisplayBytesTx < 1024)
   {
-    DisplayBytesTx := BytesDataTx - LastBytesDataTx . " B/s"
+    DisplayBytesTx := DisplayBytesTx . " B/s"
   }
-  If ((BytesDataTx >= 1024) and (BytesDataTx < 1048576))
+  else If ((DisplayBytesTx >= 1024) and (DisplayBytesTx < 1048576))
   {
-    DisplayBytesTx := (BytesDataTx - LastBytesDataTx)/1024 . " KB/s"
+    DisplayBytesTx := (DisplayBytesTx / 1024) . " KB/s"
   }
-  If (BytesDataRx >= 1048576)
+  else If (DisplayBytesTx >= 1048576)
   {
-    DisplayBytesTx := (BytesDataTx - LastBytesDataTx)/1048576 . " MB/s"
+    DisplayBytesTx := (DisplayBytesTx / 1048576) . " MB/s"
   }
   GuiControl, , BytesRxPerSecond, %DisplayBytesRx%
   GuiControl, , BytesTxPerSecond, %DisplayBytesTx%
@@ -449,6 +469,7 @@ MainProcess()
 {
   Global ServerWindowPID
   Global ConsoleBox
+  Global GUIPID
   
   If (ServerIsRunning())
   {
@@ -458,6 +479,8 @@ MainProcess()
     CommitSize := GetProcessMemory_CommitSize(ServerWindowPID, "M")
     WorkingSet := GetProcessMemory_WorkingSet(ServerWindowPID, "M")
     GuiControl,, ServerMemUse, Memory Usage: %WorkingSet% M / %CommitSize% M
+    CPULoad := GetServerProcessTimes(ServerWindowPID)
+    GuiControl,, ServerCPUUse, CPU Load: %CPULoad%`%
   }
   else
   {
@@ -470,7 +493,10 @@ MainProcess()
     ControlSwitcher("OFF")
     SetTimer, ServerRunningTimer, Off
   }
-  
+  WorkingSet := GetProcessMemory_WorkingSet(GUIPID, "M")
+  GuiControl,, GUIMemUse, Memory Usage: %WorkingSet% M
+  GUICPULoad := GetGUIProcessTimes(GUIPID)
+  GuiControl,, GUICPUUse, CPU Load: %GUICPULoad%`%
 }
 
 
@@ -520,25 +546,8 @@ InitializeVariables()
   LogFile := FileOpen(MCServerPath . "\server.log", "a")
   LogFilePointer := LogFile.Tell()
   LogFile.Close()
-  
-  If (!IsObject(PlayerList))
-  {
-    PlayerList := Object()
-  }
-  else
-  {
-    Index := PlayerList.MaxIndex()
-    Loop
-    {
-      PlayerList.Remove(PlayerList[Index])
-      PlayerList.Remove(Index)
-      If (Index <= 1)
-      {
-        break
-      }
-      Index := Index - 1
-    }
-  }
+
+  PlayerList := Object()
 }
 
 
@@ -976,6 +985,8 @@ SendServer(textline = "")
 
 ControlSwitcher(ServerState)
 {
+  Global StartStopServer_TT
+  Global BackupSave_TT
   Global AlwaysShowJavaConsole
   If (ServerState = "ON")
   {
@@ -989,8 +1000,10 @@ ControlSwitcher(ServerState)
       GuiControl, Enable, JavaToggle
     }
     GuiControl, Disable, ServerProperties
-    GuiControl, Disable, StartServer
-    GuiControl, Disable, ManualBackup
+    GuiControl, , StartStopServer, Stop Server
+    StartStopServer_TT := "Press this button to stop your server!"
+    GuiControl, , BackupSave, Save Worlds
+    BackupSave_TT := "Pressing run the save-all command on your server"
     GuiControl, Enable, SaveWorlds
     GuiControl, Enable, WarnRestart
     GuiControl, Enable, ImmediateRestart
@@ -1008,8 +1021,10 @@ ControlSwitcher(ServerState)
     GuiControl, Disable, JavaToggle
     GuiControl, , JavaToggle, Show Java Console
     GuiControl, Enable, ServerProperties
-    GuiControl, Enable, StartServer
-    GuiControl, Enable, ManualBackup
+    GuiControl, , StartStopServer, Start Server
+    StartStopServer_TT := "Press this button to start your server!"
+    GuiControl, , BackupSave, Manual Backup
+    BackupSave_TT := "Pressing this will backup the world folders specified in GUI Config"
     GuiControl, Disable, SaveWorlds
     GuiControl, Disable, WarnRestart
     GuiControl, Disable, ImmediateRestart
@@ -1018,6 +1033,7 @@ ControlSwitcher(ServerState)
     GuiControl, Disable, Submit
     
     GuiControl,, ServerMemUse, Memory Usage: NA
+    GuiControl,, ServerCPUUse, CPU Load: NA
     Gui, Font, cRed Bold,
     GuiControl, Font, ServerStatus
     GuiControl,, ServerStatus, Not Running
@@ -1389,6 +1405,36 @@ GetProcessMemory_WorkingSet(ProcID, Units="K")
       Return PrivateBytes / 1024
   if (Units == "M")
       Return PrivateBytes / 1024 / 1024
+}
+
+
+GetServerProcessTimes(pid)    ; Individual CPU Load of the process with pid
+{
+   Static soldKrnlTime, soldUserTime
+   Static snewKrnlTime, snewUserTime
+
+   soldKrnlTime := snewKrnlTime
+   soldUserTime := snewUserTime
+
+   hProc := DllCall("OpenProcess", "Uint", 0x400, "int", 0, "Uint", pid)
+   DllCall("GetProcessTimes", "Uint", hProc, "int64P", CreationTime, "int64P", ExitTime, "int64P", snewKrnlTime, "int64P", snewUserTime)
+   DllCall("CloseHandle", "Uint", hProc)
+   Return (snewKrnlTime-soldKrnlTime + snewUserTime-soldUserTime)/10000000 * 100   ; 1sec: 10**7
+}
+
+
+GetGUIProcessTimes(pid)    ; Individual CPU Load of the process with pid
+{
+   Static goldKrnlTime, goldUserTime
+   Static gnewKrnlTime, gnewUserTime
+
+   goldKrnlTime := gnewKrnlTime
+   goldUserTime := gnewUserTime
+
+   hProc := DllCall("OpenProcess", "Uint", 0x400, "int", 0, "Uint", pid)
+   DllCall("GetProcessTimes", "Uint", hProc, "int64P", CreationTime, "int64P", ExitTime, "int64P", gnewKrnlTime, "int64P", gnewUserTime)
+   DllCall("CloseHandle", "Uint", hProc)
+   Return (gnewKrnlTime-goldKrnlTime + gnewUserTime-goldUserTime)/10000000 * 100   ; 1sec: 10**7
 }
 
 
@@ -1764,22 +1810,39 @@ Submit:
 return
 
 
-StartServer:
-  StartServer()
+StartStopServer:
+  GuiControlGet, StartStopServer, , StartStopServer
+  If (StartStopServer = "Start Server")
+  {
+    StartServer()
+  }
+  else
+  {
+    WhatTerminated := "USER"
+    StopServer()
+  }
 return
 
 
-ManualBackup:
-  GuiControl, Disable, ManualBackup
-  Backup()
-  GuiControl, Enable, ManualBackup
+BackupSave:
+  GuiControlGet, BackupSave, , BackupSave
+  If (BackupSave = "Manual Backup")
+  {
+    GuiControl, Disable, BackupSave
+    Backup()
+    GuiControl, Enable, BackupSave
+  }
+  else
+  {
+    SendServer("save-all")
+  }
 return
 
-
+/*
 SaveWorlds:
   SendServer("save-all")
 return
-
+*/
 
 WarnRestart:
   WhatTerminated := "USER"
@@ -1792,13 +1855,13 @@ ImmediateRestart:
   AutomaticRestart()
 return
 
-
+/*
 StopServer:
   WhatTerminated := "USER"
   StopServer()
 return
-
-
+*/
+/*
 JavaToggle:
   GuiControlGet, JavaToggle,, JavaToggle
   If (JavaToggle = "Show Java Console")
@@ -1812,7 +1875,7 @@ JavaToggle:
     GuiControl,, JavaToggle, Show Java Console
   }
 return
-
+*/
 
 MCBackupPathBrowse:
   FileSelectFolder, MCBackupPath, %A_ComputerName%, 3, Please select where you would like your backups stored

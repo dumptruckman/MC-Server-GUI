@@ -7,11 +7,10 @@ Server file manipulation (like installing/configuring plugins)
 More Error Checking
 Resizeable GUI
 Minimize to tray
-CPU information
-Network monitor
-CPU and RAM info for the GUI itself
 Archive the backups
 Display seconds >60 as minutes
 Extra restart messages?
 Customizable restart messages
 Full, archived, backups of server (plugins and all)
+Add ability to restart based on memory limits
+Warnings when the server could be lagging
