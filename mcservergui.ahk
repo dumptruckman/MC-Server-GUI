@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".5.5"
+VersionNumber := ".5.6-dev"
 
 ;Include RichEdit lib
 #Include RichEdit.ahk
@@ -23,6 +23,16 @@ DetectHiddenWindows, On
 
 ;Initialize GUI Config Globals
 GUIPATH = %A_WorkingDir%
+netstatFile := GUIPATH . "\guinetwork.dat"
+SetFormat, FloatFast, .1
+RunWait %comspec% /c ""Netstat" "-e" >"%netstatFile%"",, Hide
+FileReadLine, BytesData, % netstatFile, 5
+StringReplace, BytesData, BytesData, Bytes,
+BytesData = %BytesData%
+;StringSplit, LastBytesData, LastBytesData, % A_Space
+LastBytesDataRx := SubStr(BytesData, 1, InStr(BytesData, " "))
+LastBytesDataTx := SubStr(BytesData, InStr(BytesData, " "))
+LastBytesDataTx = %LastBytesDataTx%
 InitializeConfig()
 ServerProperties := ReadServerProps()
 
@@ -98,6 +108,10 @@ GuiControl, Disable, StopServer
 Gui, Add, Text, yp+30 x10 w100 vServerStatus cRed Bold, Not Running
 ;Memory counter text control
 Gui, Add, Text, yp xp+100 w200 vServerMemUse, Memory Usage: NA
+
+Gui, Add, Text, xs Section, Bytes per second: 
+Gui, Add, Text, w140 vBytesRxPerSecond, Loading...
+Gui, Add, Text, w140 vBytesTxPerSecond, Loading...
 
 
 ;SECOND TAB - SERVER CONFIG
@@ -260,6 +274,7 @@ Menu, ConsoleBoxMenu, add, Copy, ConsoleCopy
 OnMessage(0x200, "WM_MOUSEMOVE")
 SetTimer, MainTimer, 250
 SetTimer, RestartScheduler, 1000
+SetTimer, NetworkMonitor, 1000
 SetTimer, GetCharKeyPress, 100
 If (ServerStartOnStartup)
 {
@@ -382,6 +397,47 @@ AutomaticRestartTimer:
 return
 
 
+NetworkMonitor:
+  RunWait %comspec% /c ""Netstat" "-e" >"%netstatFile%"",, Hide
+  FileReadLine, BytesData, % netstatFile, 5
+  StringReplace, BytesData, BytesData, Bytes,
+  BytesData = %BytesData%
+  ;StringSplit, LastBytesData, LastBytesData, % A_Space
+  BytesDataRx := SubStr(BytesData, 1, InStr(BytesData, " "))
+  BytesDataTx := SubStr(BytesData, InStr(BytesData, " "))
+  BytesDataTx = %BytesDataTx%
+  ;This is wrong >.< Fix it!
+  If (BytesDataRx < 1024)
+  {
+    DisplayBytesRx := BytesDataRx - LastBytesDataRx . " B/s"
+  }
+  If ((BytesDataRx >= 1024) and (BytesDataRx < 1048576))
+  {
+    DisplayBytesRx := (BytesDataRx - LastBytesDataRx)/1024 . " KB/s"
+  }
+  If (BytesDataRx >= 1048576)
+  {
+    DisplayBytesRx := (BytesDataRx - LastBytesDataRx)/1048576 . " MB/s"
+  }
+  If (BytesDataTx < 1024)
+  {
+    DisplayBytesTx := BytesDataTx - LastBytesDataTx . " B/s"
+  }
+  If ((BytesDataTx >= 1024) and (BytesDataTx < 1048576))
+  {
+    DisplayBytesTx := (BytesDataTx - LastBytesDataTx)/1024 . " KB/s"
+  }
+  If (BytesDataRx >= 1048576)
+  {
+    DisplayBytesTx := (BytesDataTx - LastBytesDataTx)/1048576 . " MB/s"
+  }
+  GuiControl, , BytesRxPerSecond, %DisplayBytesRx%
+  GuiControl, , BytesTxPerSecond, %DisplayBytesTx%
+  LastBytesDataRx := BytesDataRx
+  LastBytesDataTx := BytesDataTx
+return
+
+
 
 /*
 *************
@@ -414,6 +470,7 @@ MainProcess()
     ControlSwitcher("OFF")
     SetTimer, ServerRunningTimer, Off
   }
+  
 }
 
 
