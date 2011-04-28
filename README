@@ -6,9 +6,7 @@ My guess is that it will work fine for XP/2000/Vista/7 but I can't garauntee it'
 
 
 Installation is pretty simple:
-1. Unzip mcservergui.exe somewhere
-    (I recommend just putting them both in your minecraft server folder.)
-2. Run mcservergui.exe and click on Server Config
-3. Modify these settings to your needs but most importantly locate your MC Server Jar file
+1. Unzip mcservergui.exe and 7za.exe (This file is for archiving ability) into your Minecraft Server directory
+2. Run mcservergui.exe.  It will attempt to detect the jar file for your server.  If it cannot find it, set it manually under Server Config.
 
 That's it!

@@ -49,7 +49,7 @@ ServerProperties := ReadServerProps()
 * GUI SETUP *
 *************
 */
-Gui, Add, Tab2, Buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
+Gui, Add, Tab2, buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
 Gui, Margin, 5, 5
 Gui, +Resize +MinSize
 
@@ -65,11 +65,12 @@ RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
 
 ;Player List
 
-Gui, Add, GroupBox, ys Section w200 h275, Player List
+Gui, Add, GroupBox, ys Section w200 h275 vPlayerListBox, Player List
 Gui, Add, TreeView, xp+10 yp+15 w180 h250 vPlayerList AltSubmit -Buttons -Lines
 
 ;Console input field + button
-Gui, Add, GroupBox, xs x10 w700 h50, Console Input
+Gui, Add, GroupBox, xs x10 w700 h50 vConsoleInputBox, Console Input
+
 Gui, Add, CheckBox, xp+10 yp+21 Section vSayToggle, Say
 Gui, Add, Edit, ys yp-4 w585 vConsoleInput
 ConsoleInput_TT := "Press shift+enter to 'say' to the server"
@@ -78,7 +79,9 @@ GuiControl, Disable, ConsoleInput
 GuiControl, Disable, Submit
 
 ;Server Control buttons
-Gui, Add, GroupBox, x10 w200 h75 vServerControlBox, Server Control
+GuiControlGet, GUIPos, Pos, ConsoleInputBox
+GUIPosY := GUIPosY + GUIPosH + 5
+Gui, Add, GroupBox, x10 y%GUIPosY% w200 h75 vServerControlBox, Server Control
 Gui, Add, Button, xp+10 yp+15 w87 Section gStartStopServer vStartStopServer, Start Server
 StartStopServer_TT := "Press this button to start your server!"
 Gui, Add, Button, ys w87 gBackupSave vBackupSave, Manual Backup
@@ -127,9 +130,32 @@ GuiControlGet, GUIPos, Pos, GUIInfoBox
 GUIPosX := GUIPosX + GUIPosW + 5
 Gui, Add, GroupBox, y%GUIPosY% x%GUIPosX% w155 h75 vNetworkInfoBox, Network Information
 Gui, Add, Text, yp+15 xp+10 Section, Receiving: 
-Gui, Add, Text, ys w100 vBytesRxPerSecond, Loading...
+Gui, Add, Text, ys w90 vBytesRxPerSecond, Loading...
 Gui, Add, Text, xs Section, Transmitting: 
-Gui, Add, Text, ys w100 vBytesTxPerSecond, Loading...
+Gui, Add, Text, ys w90 vBytesTxPerSecond, Loading...
+
+;Main Window Backup Control
+GuiControlGet, GUIPos, Pos, PlayerListBox
+BoxW := GUIPosW
+GuiControlGet, GUIPos, Pos, ServerControlBox
+BoxH := GUIPosH + 5
+GuiControlGet, GUIPos, Pos, ConsoleInputBox
+GUIPosX := GUIPosX + GUIPosW + 5
+BoxH := BoxH + GUIPosH
+Gui, Add, GroupBox, x%GUIPosX% y%GUIPosY% w%BoxW% h%BoxH%, Backup Control
+;Checkboxes for whether or not to backup worlds/log
+Gui, Add, CheckBox, xp+10 yp+15 Section vWorldBackups gWorldBackups, Run World Backups
+WorldBackups_TT := "Whether world folders will be backed up when automatically restarted or when manual backup is pressed."
+GuiControl,, WorldBackups, %WorldBackups%
+Gui, Add, CheckBox, xs vLogBackups gLogBackups, Run Log Backups
+LogBackups_TT := "Whether server.log will be backed up when automatically restarted or when manual backup is pressed."
+GuiControl,, LogBackups, %LogBackups%
+;Checkbox for Zipping backups
+Gui, Add, CheckBox, xs vZipBackups gZipBackups, Zip Backups
+ZipBackups_TT := "Whether or not to archive the backup files"
+GuiControl,, ZipBackups, %ZipBackups%
+;Info
+Gui, Add, Text, xs, Configure the settings for your backups`non the GUI Config tab
 
 
 ;SECOND TAB - SERVER CONFIG
@@ -236,16 +262,9 @@ Gui, Add, Edit, xs w%Temp% vNickNames
 Gui, Add, Text, xm y430 cRed, Once changes are complete, simply click on another tab to save..
 
 ;Backup information controls
-Gui, Add, GroupBox, x312 y30 w300 h335, Backups
-;Checkboxes for whether or not to backup worlds/log
-Gui, Add, CheckBox, x322 y53 Section vWorldBackups, Run World Backups
-WorldBackups_TT := "Whether world folders will be backed up when automatically restarted or when manual backup is pressed."
-GuiControl,, WorldBackups, %WorldBackups%
-Gui, Add, CheckBox, xs vLogBackups, Run Log Backups
-LogBackups_TT := "Whether server.log will be backed up when automatically restarted or when manual backup is pressed."
-GuiControl,, LogBackups, %LogBackups%
+Gui, Add, GroupBox, x312 y30 w300 h285, Backup Settings
 ;Names of world field
-Gui, Add, Text, xs, Enter names of worlds below:`n  (separate each one with a comma and NO spaces)
+Gui, Add, Text, x322 yp+15 Section, Enter names of worlds below:`n  (separate each one with a comma and NO spaces)
 Gui, Add, Edit, xs w280 r1 -multi vWorldList, %WorldList%
 WorldList_TT := "Example: world,nether"
 ;Restart times field
@@ -322,6 +341,24 @@ SetTimer, MainTimer, 250
 SetTimer, RestartScheduler, 1000
 SetTimer, NetworkMonitor, 1000
 SetTimer, GetCharKeyPress, 100
+
+If ((MCServerJar = "Set this") or (MCServerJar = ""))
+{
+  ServerJar := AutoDetectServerJar()
+  If (ServerJar)
+  {
+    MCServerJar := ServerJar
+    SplitPath, MCServerJar, MCServerJar, MCServerPath
+    SetConfigKey("Folders", "ServerPath", MCServerPath)
+    SetConfigKey("ServerArguments", "ServerJarFile", MCServerJar)
+    AddText("[GUI] Autodetected " . MCServerJar . " as your Minecraft server jar file.  Please make corrections in Server Config if this is wrong.")
+  }
+  else
+  {
+    AddText("[GUI] Could not locate a server jar file.  Please set this manually under Server Config.")
+  }
+}
+
 If (ServerStartOnStartup)
 {
   StartServer()
@@ -510,6 +547,12 @@ MainProcess()
     GuiControl,, ServerMemUse, Memory Usage: %WorkingSet% M / %CommitSize% M
     CPULoad := GetServerProcessTimes(ServerWindowPID)
     GuiControl,, ServerCPUUse, CPU Load: %CPULoad%`%
+    /*
+    If (VerifyPaths() = 0)
+    {
+      MsgBox, Something just happened to the paths you specified!  Please check your configuration.
+    }
+    */
   }
   else
   {
@@ -605,7 +648,7 @@ InitializeConfig()
   TimeToReconnect := GetConfigKey("Timing", "TimeToReconnect", "30")
   WorldBackups := GetConfigKey("Backups", "RunWorldBackups", "1")
   LogBackups := GetConfigKey("Backups", "RunLogBackups", "1")
-  ZipBackups := GetConfigKey("Backups", "ZipBackups", "0")
+  ZipBackups := GetConfigKey("Backups", "ZipBackups", "1")
   WorldList := ReadWorlds()
   If (WorldList = "ERROR")
   {
@@ -685,10 +728,18 @@ ReadWorlds()        ;Returns all worlds in the config, one per line
 }
 
 
+DeleteWorlds()
+{
+  Global GUIPATH
+  IniDelete, %GUIPATH%\guiconfig.ini, Worlds
+}
+
+
 WriteWorlds(Worlds)
 {
   Global GUIPATH
   
+  DeleteWorlds()
   Loop, Parse, Worlds, `,
   {
     If (A_LoopField != "")
@@ -719,6 +770,32 @@ WriteServerProps(ByRef ServerProperties)
 
   FileDelete, %MCServerPath%\server.properties
   FileAppend, %ServerProperties%, %MCServerPath%\server.properties
+}
+
+
+AutoDetectServerJar()
+{
+  Global MCServerPath
+  
+  ServerJar = 0
+  SetWorkingDir, %MCServerPath%
+  If (FileExist("*server*.jar"))
+  {
+    Loop, *server*.jar
+    {
+      ServerJar := A_LoopFileLongPath
+      break
+    }
+  }
+  If (FileExist("*bukkit*.jar"))
+  {
+    Loop, *bukkit*.jar
+    {
+      ServerJar := A_LoopFileLongPath
+      break
+    }
+  }
+  return ServerJar
 }
 
 
@@ -832,13 +909,13 @@ VerifyPaths()
     }
     else
     {
-      ReplaceText("MC Backup Path points to a non-existant folder!")
+      ;ReplaceText("MC Backup Path points to a non-existant folder!")
       return 0
     }
   }
   else
   {
-    ReplaceText("MC Server Path points to a non-existant folder!")
+    ;ReplaceText("MC Server Path points to a non-existant folder!")
     return 0
   }
 }
@@ -869,6 +946,7 @@ WriteErrorLog(ErrorMessage)
 StartServer()
 {
   Global MCServerJar
+  Global MCServerPath
   
   If (MCServerJar = "Set this")             ;If not config'd
   {
@@ -876,9 +954,15 @@ StartServer()
     return 0
   }
   
+  If (!FileExist(MCServerPath . "\" . MCServerJar))
+  {
+    ReplaceText("[GUI] Server Jar file does not exist! please correct this in Server Config.")
+    return 0
+  }
+  
   If (VerifyPaths() = 0)                    ;If paths are invalid
   {
-    ;ReplaceText("[GUI] Your paths are not set up properly, please make corrections in GUI Config before continuing.")
+    ReplaceText("[GUI] Your paths are not set up properly, please make corrections in GUI Config before continuing.")
     return 0
   }
   
@@ -896,7 +980,6 @@ StartServer()
   }
   
   ;Grab some globals
-  Global MCServerPath
   Global ServerWindowPID
   Global ServerWindowID
   Global UpdateRate
@@ -1660,12 +1743,17 @@ GUIUpdate()
 
     UpdateRate := GetConfigKey("Timing", "UpdateRate")
     GuiControl,, UpdateRate, %UpdateRate%
-
+    
+    /*
     WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
     GuiControl,, WorldBackups, %WorldBackups%
 
     LogBackups := GetConfigKey("Backups", "RunLogBackups")
     GuiControl,, LogBackups, %LogBackups%
+    
+    ZipBackups := GetConfigKey("Backups", "ZipBackups")
+    GuiControl,, ZipBackups, %ZipBackups%
+    */
     
     WorldList := ReadWorlds()
     GuiControl,, WorldList, %WorldList%
@@ -1711,8 +1799,6 @@ GUIUpdate()
   }
   if (ThisTab != "GUI Config")
   {
-    ;GuiControlGet, MCServerPath,, MCServerPath 
-
     GuiControlGet, MCBackupPath,, MCBackupPath
     SetConfigKey("Folders", "BackupPath", MCBackupPath) 
 
@@ -1730,11 +1816,16 @@ GUIUpdate()
     SetTimer, MainTimer, Off
     SetTimer, MainTimer, %UpdateRate%
     
+    /*
     GuiControlGet, WorldBackups,, WorldBackups
     SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
  
     GuiControlGet, LogBackups,, LogBackups
     SetConfigKey("Backups", "RunLogBackups", LogBackups)
+    
+    GuiControlGet, ZipBackups,, ZipBackups
+    SetConfigKey("Backups", "ZipBackups", ZipBackups)
+    */
     
     GuiControlGet, WorldList,, WorldList
     WriteWorlds(WorldList)
@@ -2091,11 +2182,27 @@ return
 ConsoleCopy:
   RichEdit_Copy(ConsoleBox)
 return
-;WorldBackupsMainWindow:
-;  Gui, Submit, NoHide
-;  GuiControlGet, WorldBackups,, WorldBackupsMainWindow
-;  SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
-;return
+
+
+WorldBackups:
+  Gui, Submit, NoHide
+  GuiControlGet, WorldBackups,, WorldBackups
+  SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
+return
+
+
+LogBackups:
+  Gui, Submit, NoHide
+  GuiControlGet, LogBackups,, LogBackups
+  SetConfigKey("Backups", "RunLogBackups", LogBackups)
+return
+
+
+ZipBackups:
+  Gui, Submit, NoHide
+  GuiControlGet, ZipBackups,, ZipBackups
+  SetConfigKey("Backups", "ZipBackups", ZipBackups)
+return
 
 
 GUIUpdate:
