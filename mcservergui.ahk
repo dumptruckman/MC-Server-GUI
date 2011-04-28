@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".6.0-dev"
+VersionNumber := ".6.0"
 
 ;Include Libraries
 #Include RichEdit.ahk
