@@ -1,10 +1,12 @@
-Version .5.6-dev
+Version .6.0-dev
   Consolidated some buttons
   Reorganized main window
   Added CPU monitor for server
   Added Memory and CPU monitor for GUI
   Added network statistics (Please note, this is for ALL network activity for the server PC)
   Possible fix for certain players not showing up in the player list
+  Seconds are now converted to minutes and seconds
+  Can now archive to zip file.  Can only enable through guiconfig.ini currently
 
 Version .5.5
   Now able to send exclamation marks to the server!

@@ -5,11 +5,10 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".5.6-dev"
+VersionNumber := ".6.0-dev"
 
 ;Include Libraries
 #Include RichEdit.ahk
-#Include Anchor.ahk
 
 ;Initialize Internal Global Variables
 ServerWindowPID = 0
@@ -23,8 +22,9 @@ DetectHiddenWindows, On
 
 ;Initialize GUI Config Globals
 GUIPATH = %A_WorkingDir%
+FloatingPointPrecision = .1
 netstatFile := GUIPATH . "\guinetwork.dat"
-SetFormat, FloatFast, .1
+SetFormat, FloatFast, %FloatingPointPrecision%
 RunWait %comspec% /c ""Netstat" "-e" >"%netstatFile%"",, Hide
 FileReadLine, BytesData, % netstatFile, 5
 StringReplace, BytesData, BytesData, Bytes,
@@ -177,33 +177,60 @@ Gui, Add, Edit, x322 yp+20 w300 r20 -wrap vServerProperties, %ServerProperties%
 Gui, Tab, GUI Config
 
 ;Box for file/folder information controls
-Gui, Add, GroupBox, x10 y30 w300 h75, Folders/Executable
+Gui, Add, GroupBox, x10 y30 w300 h70 vFoldersExecutableBox, Folders/Executable
+GuiControlGet, GUIPos, Pos, FoldersExecutableBox
+BoxW := GUIPosW
 ;MC Backup Path field
-Gui, Add, Text, x20 y53, MC Backup Path: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vMCBackupPath, %MCBackupPath%
-Gui, Add, Button, xp+150 yp-2 gMCBackupPathBrowse, Browse
+Gui, Add, Text, x20 yp+20 Section vMCBackupPathText, MC Backup Path: 
+GuiControlGet, GUIPos, Pos, MCBackupPathText
+Temp := BoxW - GUIPosW - 75
+Gui, Add, Edit, ys yp-3 w%Temp% -wrap -multi r1 vMCBackupPath, %MCBackupPath%
+Gui, Add, Button, ys yp-2 gMCBackupPathBrowse, Browse
 MCBackupPath_TT := "Enter the path of the folder you'd like to store backups in"
 ;Java Executable field
-Gui, Add, Text, x20 yp+30, Java Executable: 
-Gui, Add, Edit, xp+85 yp-3 w145 -wrap -multi r1 vJavaExec, %JavaExec%
-Gui, Add, Button, xp+150 yp-2 gJavaExecutableBrowse, Browse
+Gui, Add, Text, xs Section vJavaExecutableText, Java Executable: 
+GuiControlGet, GUIPos, Pos, JavaExecutableText
+Temp := BoxW - GUIPosW - 75
+Gui, Add, Edit, ys yp-3 w%Temp% -wrap -multi r1 vJavaExec, %JavaExec%
+Gui, Add, Button, ys yp-2 gJavaExecutableBrowse, Browse
 JavaExec_TT := "Enter the path of your Java executable here.  You can probably leave this set to java.exe"
 
+;Miscellaneous
+GuiControlGet, GUIPos, Pos, FoldersExecutableBox
+GUIPosY := GUIPosY + GUIPosH + 5
+Gui, Add, GroupBox, y%GUIPosY% x%GUIPosX% w%GUIPosW% h125 vMiscellaneousBox, Miscellaneous
+GuiControlGet, GUIPos, Pos, MisecellaneousBox
+BoxW := GUIPosW
 ;Title of GUI's window
-Gui, Add, Text, x20 yp+40, GUI Window Title:
-Gui, Add, Edit, xp+90 yp-3 w195 vWindowTitle, %WindowTitle%
+Gui, Add, Text, xp+10 yp+20 Section vWindowTitleText, GUI Window Title:
+GuiControlGet, GUIPos, Pos, WindowTitleText
+Temp := BoxW - GUIPosW - 23
+Gui, Add, Edit, ys yp-3 w%Temp% vWindowTitle, %WindowTitle%
 WindowTitle_TT := "Enter the title of this very window!"
-
 ;Box for rate at which GUI updates the console readout of the server
-Gui, Add, Text, x20 yp+27, Update Rate: 
-Gui, Add, Edit, xp+70 yp-3 w215 number vUpdateRate, %UpdateRate%
-Gui, Add, Text, x20 yp+22, (How often the console window is refreshed in miliseconds)
+Gui, Add, Text, xs Section vUpdateRateText, Update Rate: 
+GuiControlGet, GUIPos, Pos, UpdateRateText
+Temp := BoxW - GUIPosW - 23
+Gui, Add, Edit, ys yp-3 w%Temp% number vUpdateRate, %UpdateRate%
+Gui, Add, Text, xs, (How often the console window is refreshed in miliseconds)
 ;Option to start server on gui startup
-Gui, Add, CheckBox, x20 yp+20 vServerStartOnStartup, Start Server on GUI Start
+Gui, Add, CheckBox, xs vServerStartOnStartup, Start Server on GUI Start
 GuiControl,, ServerStartOnStartup, %ServerStartOnStartup%
 ;Option to always show java console
-Gui, Add, CheckBox, x20 yp+20 vAlwaysShowJavaConsole, Always show Java console (Starts minimized)
+Gui, Add, CheckBox, xs vAlwaysShowJavaConsole, Always show Java console (Starts minimized)
 GuiControl,, AlwaysShowJavaConsole, %AlwaysShowJavaConsole%
+
+/* Not yet ready
+;NickNames
+GuiControlGet, GUIPos, Pos, MiscellaneousBox
+GUIPosY := GUIPosY + GUIPosH + 5
+Gui, Add, GroupBox, y%GUIPosY% x%GUIPosX% w%GUIPosW% h70 vNickNamesBox, Nick Names
+GuiControlGet, GUIPos, Pos, NickNamesBox
+BoxW := GUIPosW
+Gui, Add, Text, xp+10 yp+15 Section, If anyone ever shows up in your /list with a name other than`nthe name they log in with, please specify it here.  The format`nis as follows: LoginName=NickName`nSeperate multiple entries with commas (and no spaces)
+Temp := BoxW - 20
+Gui, Add, Edit, xs w%Temp% vNickNames
+*/
 
 ;Info
 Gui, Add, Text, xm y430 cRed, Once changes are complete, simply click on another tab to save..
@@ -409,7 +436,9 @@ AutomaticRestartTimer:
     If (WarningTimesArray[WarningTimesIndex] = RestartCountDown)
     {
       WarningTimesIndex := WarningTimesIndex + 1
-      SendServer("say Automatic restart in " . RestartCountDown . " seconds.  Please reconnect in approximately " . (RestartCountDown + TimeToReconnect) . " seconds.")
+      WarningMessage := "say Automatic restart in " . RestartTime := ConvertSecondstoMinSec(RestartCountDown) . ".  Please reconnect in approximately " . ConvertSecondstoMinSec(RestartCountDown + TimeToReconnect) . "."
+
+      SendServer(WarningMessage)
     }
   }
   RestartCountDown := RestartCountDown - 1
@@ -576,6 +605,7 @@ InitializeConfig()
   TimeToReconnect := GetConfigKey("Timing", "TimeToReconnect", "30")
   WorldBackups := GetConfigKey("Backups", "RunWorldBackups", "1")
   LogBackups := GetConfigKey("Backups", "RunLogBackups", "1")
+  ZipBackups := GetConfigKey("Backups", "ZipBackups", "0")
   WorldList := ReadWorlds()
   If (WorldList = "ERROR")
   {
@@ -707,6 +737,43 @@ CSVtoArray(ByRef ToProcess)
 }
 
 
+ConvertSecondstoMinSec(Seconds)
+{
+  MinSec := ""
+  Minutes := 0
+  Loop
+  {
+    If (Seconds < 60)
+    {
+      If (Minutes != 0)
+      {
+        MinSec := Minutes . " minute"
+        If (Minutes > 1)
+        {
+          MinSec := MinSec . "s"
+        }
+        If (Seconds > 0)
+        {
+          MinSec := MinSec . " and "
+        }
+      }
+      If (Seconds > 0)
+      {
+        MinSec := MinSec . Seconds . " second"
+        If (Seconds > 1)
+        {
+          MinSec := MinSec . "s"
+        }
+      }
+      break
+    }
+    Seconds := Seconds - 60
+    Minutes := Minutes + 1
+  }
+  return MinSec
+}
+
+
 BuildRunLine()
 {
   Global JavaExec
@@ -765,13 +832,13 @@ VerifyPaths()
     }
     else
     {
-      MsgBox, MC Backup Path points to a non-existant folder!
+      ReplaceText("MC Backup Path points to a non-existant folder!")
       return 0
     }
   }
   else
   {
-    MsgBox, MC Server Path points to a non-existant folder!
+    ReplaceText("MC Server Path points to a non-existant folder!")
     return 0
   }
 }
@@ -811,7 +878,7 @@ StartServer()
   
   If (VerifyPaths() = 0)                    ;If paths are invalid
   {
-    ReplaceText("[GUI] Your paths are not set up properly, please make corrections in GUI Config before continuing.")
+    ;ReplaceText("[GUI] Your paths are not set up properly, please make corrections in GUI Config before continuing.")
     return 0
   }
   
@@ -846,7 +913,12 @@ StartServer()
   IfMsgBox Yes
   {
     IsBackingUp = 1
-    BackupLog()
+    FileGetVersion, trash, server.log         ;This is necessary to "refresh"
+    FileGetTime, filetime, server.log
+    FormatTime, foldername, filetime, yyyyMMddHHmmss
+    foldername := substr(foldername, 1, 4) . "-" . substr(foldername, 5, 2) . "-" . substr(foldername, 7, 2) . " " . substr(foldername, 9, 2) . "." . substr(foldername, 11, 2) . "." . substr(foldername, 13, 2)
+    FileCreateDir, %MCBackupPath%\%foldername%
+    BackupLog(foldername)
     IsBackingUp = 0
   }
   
@@ -1010,6 +1082,7 @@ ControlSwitcher(ServerState)
     GuiControl, Enable, StopServer
     GuiControl, Enable, ConsoleInput
     GuiControl, Enable, Submit
+    GuiControl, Disable, MCServerJar
     
     Gui, Font, cGreen Bold,
     GuiControl, Font, ServerStatus
@@ -1031,6 +1104,7 @@ ControlSwitcher(ServerState)
     GuiControl, Disable, StopServer
     GuiControl, Disable, ConsoleInput
     GuiControl, Disable, Submit
+    GuiControl, Enable, MCServerJar
     
     GuiControl,, ServerMemUse, Memory Usage: NA
     GuiControl,, ServerCPUUse, CPU Load: NA
@@ -1046,64 +1120,95 @@ Backup()
   Global LogBackups
   Global WorldBackups
   Global IsBackingUp
+  Global ZipBackups
+  Global MCServerPath
+  Global MCBackupPath
   
   IsBackingUp = 1
   
-  if (LogBackups = "1")     ;Runs log backups if suppose to
-  {
-    BackupLog()
-  } 
-  else
-  {
-    AddText("[GUI] Log backups are disabled... skipping`n")
-  }
   
-  if (WorldBackups = "1")   ;Runs world backups if suppose to
+  If ((LogBackups = "1") or (WorldBackups = "1"))
   {
-    Global WorldList
+    SetWorkingDir, %MCServerPath%
+    FileGetVersion, trash, server.log         ;This is necessary to "refresh"
+    FileGetTime, filetime, %MCServerPath%\server.log
+    FormatTime, foldername, filetime, yyyyMMddHHmmss
+    filetime := substr(foldername, 1, 4) . "-" . substr(foldername, 5, 2) . "-" . substr(foldername, 7, 2) . " " . substr(foldername, 9, 2) . "." . substr(foldername, 11, 2) . "." . substr(foldername, 13, 2)
     
-    WorkingOn = 1           ;Loop index
-    Loop, Parse, WorldList, `,
+    If (!ZipBackups)
     {
-      If (A_LoopField != "")
+      FileCreateDir, %MCBackupPath%\%filetime%
+    }
+    if (LogBackups = "1")     ;Runs log backups if suppose to
+    {
+      BackupLog(filetime)
+    } 
+    else
+    {
+      AddText("[GUI] Log backups are disabled... skipping`n")
+    }
+    
+    if (WorldBackups = "1")   ;Runs world backups if suppose to
+    {
+      Global WorldList
+      
+      WorkingOn = 1           ;Loop index
+      Loop, Parse, WorldList, `,
       {
-        BackupWorld(A_LoopField)
+        If (A_LoopField != "")
+        {
+          BackupWorld(filetime, A_LoopField)
+        }
       }
+    }
+    else
+    {
+      AddText("[GUI] World backups are disabled... skipping`n")
     }
   }
   else
   {
-    AddText("[GUI] World backups are disabled... skipping`n")
+    AddText("[GUI] Backups are disabled... skipping`n")
   }
   
   IsBackingUp = 0
 }
 
 
-BackupWorld(world = "world")
+BackupWorld(backupfolder, world = "world")
 {
   Global MCServerPath
   Global MCBackupPath
+  Global ZipBackups
   
   AddText("[GUI] Backing up " . world . "...")
   sleep 10
 	SetWorkingDir, %MCServerPath%
-  FileGetTime, filetime, %MCServerPath%\%world%
-  FileGetSize, OriginalSize, %MCServerPath%\%world%
-  FormatTime, newfiletime, filetime, yyyyMMddHHmmss
-  newfiletime := substr(newfiletime, 1, 4) . "-" . substr(newfiletime, 5, 2) . "-" . substr(newfiletime, 7, 2) . " " . substr(newfiletime, 9, 2) . "." . substr(newfiletime, 11, 2) . "." . substr(newfiletime, 13, 2)
-  filename = %MCBackupPath%\%world%%newfiletime%
-  FileCopyDir, %MCServerPath%\%world%, %filename%
-  If (ErrorLevel)
+  If (ZipBackups = "1")
   {
-    AddText("Error!`n")
-    WriteErrorLog("Error backing up world " . %world% . ".")
+    AddText("Archiving to " . backupfolder . ".zip...")
+    sleep 10
+    filename = %MCBackupPath%\%backupfolder%.zip
+    RunLine = 7za.exe a "%MCBackupPath%\%backupfolder%.zip" "%MCServerPath%\%world%\"
+    RunWait, %RunLine%, , Hide
   }
   else
   {
-    Loop
+    FileGetSize, OriginalSize, %MCServerPath%\%world%
+    filename = %MCBackupPath%\%backupfolder%\%world%
+    FileCopyDir, %MCServerPath%\%world%, %filename%
+    If (ErrorLevel)
     {
-      IfExist, %filename%
+      AddText("Error!`n")
+      WriteErrorLog("Error backing up world " . %world% . ".")
+      return
+    }
+  }
+  Loop
+  {
+    IfExist, %filename%
+    {
+      If (!ZipBackups)
       {
         FileGetVersion, trash, %filename%       ;This is necessary to "refresh"
         FileGetSize, BackupSize, %filename%
@@ -1113,37 +1218,62 @@ BackupWorld(world = "world")
           break
         }
       }
+      else
+      {
+        FileDelete, %MCServerPath%\server.log
+        FileAppend, ,%MCServerPath%\server.log
+        AddText("Complete!`n")
+        break
+      }
+    }
+    else
+    {
+      If (ZipBackups)
+      {
+        AddText("Error!`n")
+        break
+      }
     }
   }
 }
 
 
-BackupLog()
+BackupLog(backupfolder)
 {
   Global MCServerPath
   Global MCBackupPath
   Global ConsoleBox
+  Global ZipBackups
   
   AddText("[GUI] Backing up server.log...")
   sleep 10
 	SetWorkingDir, %MCServerPath%
-  FileGetVersion, trash, %filename%         ;This is necessary to "refresh"
-  FileGetSize, OriginalSize, server.log
-  FileGetTime, filetime, %MCServerPath%\server.log
-  FormatTime, newfiletime, filetime, yyyyMMddHHmmss
-  newfiletime := substr(newfiletime, 1, 4) . "-" . substr(newfiletime, 5, 2) . "-" . substr(newfiletime, 7, 2) . " " . substr(newfiletime, 9, 2) . "." . substr(newfiletime, 11, 2) . "." . substr(newfiletime, 13, 2)
-  filename = %MCBackupPath%\%newfiletime%.log
-  FileCopy, %MCServerPath%\server.log, %filename%
-  If (ErrorLevel)
+  If (ZipBackups = "1")
   {
-    AddText("Error!`n")
-    WriteErrorLog("Error backing up server.log.")
+    AddText("Archiving to " . backupfolder . ".zip...")
+    sleep 10
+    filename = %MCBackupPath%\%backupfolder%.zip
+    RunLine = 7za.exe a "%MCBackupPath%\%backupfolder%.zip" "%MCServerPath%\server.log"
+    RunWait, %RunLine%,,Hide
   }
   else
   {
-    Loop
+    FileGetVersion, trash, server.log         ;This is necessary to "refresh"
+    FileGetSize, OriginalSize, server.log
+    filename = %MCBackupPath%\%backupfolder%\server.log
+    FileCopy, %MCServerPath%\server.log, %filename%
+    If (ErrorLevel)
     {
-      IfExist, %filename%
+      AddText("Error!`n")
+      WriteErrorLog("Error backing up server.log.")
+      return
+    }
+  }
+  Loop
+  {
+    IfExist, %filename%
+    {
+      If (!ZipBackups)
       {
         FileGetVersion, trash, %filename%         ;This is necessary to "refresh"
         FileGetSize, BackupSize, %filename%
@@ -1155,8 +1285,24 @@ BackupLog()
           break
         }
       }
+      else
+      {
+        FileDelete, %MCServerPath%\server.log
+        FileAppend, ,%MCServerPath%\server.log
+        AddText("Complete!`n")
+        break
+      }
+    }
+    else
+    {
+      If (ZipBackups)
+      {
+        AddText("Error!`n")
+        break
+      }
     }
   }
+
 }
 
 
