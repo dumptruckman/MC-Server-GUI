@@ -16,3 +16,4 @@ Change the restart scheduler to something more robust ^_^
 Special GUI op only commands, such as restarting, restart + backup, and timed restarting (suggestions?)
 Possibly have cooperability with something like MccRestart
 Detect 7za exit codes
+Delete backups after x amount of time or x amount of backups
