@@ -338,7 +338,7 @@ Menu, ConsoleBoxMenu, add, Copy, ConsoleCopy
 */
 OnMessage(0x200, "WM_MOUSEMOVE")
 SetTimer, MainTimer, 250
-SetTimer, RestartScheduler, 1000
+SetTimer, RestartAtScheduler, 1000
 SetTimer, NetworkMonitor, 1000
 SetTimer, GetCharKeyPress, 100
 
@@ -382,7 +382,17 @@ ServerRunningTimer:
 return
 
 
-RestartScheduler:
+RestartAtScheduler:
+  If (CheckForRestarts())
+  {
+    WhatTerminated := "AUTO"
+    InitiateAutomaticRestart()
+  }
+return
+
+
+ServerUpTimer:
+  ;ServerUpTime := ServerUpTime + 1
   If (CheckForRestarts())
   {
     WhatTerminated := "AUTO"
@@ -420,6 +430,7 @@ ServerStopTimer:
     TV_Delete()
     SetTimer, ServerStopTimer, Off
     SetTimer, ServerRunningTimer, Off
+    SetTimer, ServerUpTimer, Off
     ServerWindowPID = 0
     ServerWindowID = 0
     ControlSwitcher("OFF")
@@ -564,6 +575,7 @@ MainProcess()
     }
     ControlSwitcher("OFF")
     SetTimer, ServerRunningTimer, Off
+    SetTimer, ServerUpTimer, Off
   }
   WorkingSet := GetProcessMemory_WorkingSet(GUIPID, "M")
   GuiControl,, GUIMemUse, Memory Usage: %WorkingSet% M
@@ -602,11 +614,13 @@ InitializeVariables()
   Global ServerWindowPID
   Global ServerWindowID
   Global ServerState
+  Global ServerStartTime
   Global WhatTerminated
   Global IsBackingUp
   Global MCServerPath
   
   FileGetSize, LogSize, server.log
+  ServerStartTime = 
   LogFilePointer = 0
   PreviousLogLine =
   ServerWindowPID = 0
@@ -1097,6 +1111,14 @@ StartServer()
     }
     return 0
   }
+  
+  Global LongRestartTimes
+  Global RestartTimes
+  LongRestartTimes := ParseRestartTimes(RestartTimes)
+  Global ServerUpTime
+  ServerUpTime = 0
+  SetTimer, ServerUpTimer, 1000
+  SetServerStartTime()
   
   Global ServerState
   
@@ -1667,16 +1689,50 @@ GetGUIProcessTimes(pid)    ; Individual CPU Load of the process with pid
 }
 
 
+SetServerStartTime()
+{
+  Global ServerStartTime
+  ServerStartTime := A_YYYY . A_MM . A_DD . A_Hour . A_Min . A_Sec
+}
+
+
 CheckForRestarts()
 {
-  Global RestartTimes
-  
-  CurrentTime := A_Hour . ":" . A_Min . ":" . A_Sec
-  If (InStr(RestartTimes, CurrentTime))
+  Global LongRestartTimes
+
+  CurrentTime := A_YYYY . A_MM . A_DD . A_Hour . A_Min . A_Sec
+  If (InStr(LongRestartTimes, CurrentTime))
   {
     return 1
   }
   return 0
+}
+
+
+ParseRestartTimes(Times)
+{
+  Global ServerStartTime
+  LongTimes = 
+  Loop, Parse, Times, `,,%A_Space%
+  {
+    FoundMatch = 0
+    DelimiterPattern := "-!@#%&=_:;',/``~\Q$^*()+{}[]\|?<>.\E"
+    If ((RegExMatch(A_LoopField, "ix)^((\d{4})[" . DelimiterPattern . "]?(0[1-9])|(\d{4})[" . DelimiterPattern . "]?(1[012])|(\d{2}|\d{4})[" . DelimiterPattern . "](1[012])|(\d{2}|\d{4})[" . DelimiterPattern . "]([1-9])|(\d{2}|\d{4})[" . DelimiterPattern . "](0[1-9]))([" . DelimiterPattern . "]([1-9])|[" . DelimiterPattern . "]?(0[1-9])|[" . DelimiterPattern . "]?([12]\d)|[" . DelimiterPattern . "]?(3[01]))\s([012]?\d)[" . DelimiterPattern . "]?([0-5]\d)?[" . DelimiterPattern . "]?([0-5]\d)?([ap]m)?$", Test)) and (!FoundMatch))
+    {
+      MsgBox, %Test%
+      FoundMatch = 1
+    }
+    if ((RegExMatch(A_LoopField, "ix)^([012]?\d)[" . DelimiterPattern . "]?([0-5]\d)?[" . DelimiterPattern . "]?([0-5]\d)?(?P<APM>[ap]m)?$", Test)) and (!FoundMatch))
+    {
+      MsgBox, %Test%
+      FoundMatch = 1
+    }
+    if ((RegExMatch(A_LoopField, "^((?P<Day>\d{1,2})(d|day|days))?\s?((?P<Hour>\d{1,2})(h|hr|hrs|hour|hours))?\s?((?P<Minute>\d{1,2})(m|min|mins|minutes))?\s?((?P<Second>\d{1,2})(s|sec|secs|seconds))?$", Test)) and (!FoundMatch))
+    {
+      MsgBox, Days: %TestDay%`nHours: %TestHour%`nMinutes: %TestMinute%`nSeconds: %TestSecond%
+      FoundMatch = 1
+    }
+  }
 }
 
 
@@ -1832,6 +1888,7 @@ GUIUpdate()
     
     GuiControlGet, RestartTimes,, RestartTimes
     SetConfigKey("Timing", "RestartTimes", RestartTimes)
+    LongRestartTimes := ParseRestartTimes(RestartTimes)
     
     GuiControlGet, WarningTimes,, WarningTimes
     SetConfigKey("Timing", "WarningTimes", WarningTimes)
