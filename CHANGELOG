@@ -1,5 +1,10 @@
-Version .6.1-dev
-  Added some RegEx to the restart times... Not finished.
+Version .6.1
+  Restart times can be entered in a whole lot more formats. examples: 2011/1/24 10pm, 11am, 5:55:05
+  Can also enter one additional time which is how long after server start to restart. example: 10h40m
+  Restart times will no longer start your server if they did not cause it to restart
+  GUI now only tells the server to reconnect in X seconds on the final warning time
+  Informs the user that backups are skipped on manual restarts
+  Made it more apparent that the server stops when you close the GUI (It also waits to make SURE it closes)
 
 Version .6.0
   Consolidated some buttons

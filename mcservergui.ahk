@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".6.1-dev"
+VersionNumber := ".6.1"
 
 ;Include Libraries
 #Include RichEdit.ahk
@@ -49,9 +49,9 @@ ServerProperties := ReadServerProps()
 * GUI SETUP *
 *************
 */
-Gui, Add, Tab2, buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config
+Gui, Add, Tab2, w500 buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config ;|Plugin Config
 Gui, Margin, 5, 5
-Gui, +Resize +MinSize
+;Gui, +Resize +MinSize
 
 
 ;FIRST TAB - Main Window
@@ -268,19 +268,37 @@ Gui, Add, Text, x322 yp+15 Section, Enter names of worlds below:`n  (separate ea
 Gui, Add, Edit, xs w280 r1 -multi vWorldList, %WorldList%
 WorldList_TT := "Example: world,nether"
 ;Restart times field
-Gui, Add, Text, xs, Enter the time at which you would like to run automated`n restarts in HH:MM:SS (24-hour) format.  Separate each `n time by commas with NO spaces: (Leave blank for none)
+Gui, Add, Text, xs, Enter the time at which you would like to run automated`n restarts.  Separate each time by commas (Blank for none):`n Hold your mouse over the box for format details!
 Gui, Add, Edit, xs w280 r1 -multi vRestartTimes, %RestartTimes%
-RestartTimes_TT := "The times at which the server will restart automatically, with the below warning(s), and run backups, if enabled."
+RestartTimes_TT = 
+(
+You can enter these times in a wide variety of formats.
+The main conditions of formatting are:
+Time segments listed largest to smallest, so year, then month, then day and hours, then minutes, then seconds
+Dates and times must be seperated by a space
+Dates must have an associated time
+24-hour format is assumed if AM/PM is not specified
+
+Good:
+  2011/05/2 10:00:00, 5:30am, 12am, 20110702 035602
+Bad:
+  2011/05/210:00:00, 31/5/2011 10pm
+  
+Additionally, you may add a single amount of time in which the server will restart after it starts.
+Examples: 
+  10hours30minutes
+  1d14s
+)
 ;Restart warning periods field
-Gui, Add, Text, xs, Enter the times, at which automated restarts will warn the`n the server, in Seconds.  List them in descending order,`n separated by commas with NO Spaces:
+Gui, Add, Text, xs, Enter the times, at which automated restarts will warn the`n the server, in seconds.  List them in descending order,`n separated by commas with NO Spaces:
 Gui, Add, Edit, xs w280 -multi vWarningTimes, %WarningTimes%
 WarningTimes_TT := "The players will be warned at these many seconds before the server is restarted"
 ;Field for amount of time to add to the warning period to tell players to reconnect
-Gui, Add, Text, xs Section, Amount of time to tell players to wait to reconnect:`n (This will be added to the current warning's time)`n (In seconds)
-Gui, Add, Edit, ys w30 number -multi vTimeToReconnect, %TimeToReconnect%
+Gui, Add, Text, xs Section, Amount of time (in seconds) to tell players to wait to`nreconnect. (Displayed on the last warning): 
+Gui, Add, Edit, ys yp+5 w30 number -multi vTimeToReconnect, %TimeToReconnect%
 TimeToReconnect_TT := "This amount of time will be added to the above Warning Times as an indication of when players should attempt to reconnect to your server"
 ;Field for delay before restart
-Gui, Add, Text, xs Section, Delay before auto-restarting (in seconds):
+Gui, Add, Text, xs yp+35 Section, Delay before auto-restarting (in seconds):
 Gui, Add, Edit, ys yp-3 w40 number -multi r1 vRestartDelay, %RestartDelay%
 RestartDelay_TT := "Keep in mind, the server will wait to restart until backups are finished, if applicable."
 
@@ -302,6 +320,23 @@ Gui, Add, Text, x624 yp+25, [WARNING] Color:
 Gui, Add, Edit, xp+90 yp-3 vWARNINGColor, % TagColors["WARNING"]
 Gui, Add, Text, x624 yp+25, [SEVERE] Color:
 Gui, Add, Edit, xp+80 yp-3 vSEVEREColor, % TagColors["SEVERE"]
+
+
+/*
+;FOURTH TAB - PLUGIN CONFIG
+Gui, Tab, Plugin Config
+Gui, Add, GroupBox, x10 y30 w200 vMCSignOnDoorBox, MC Sign On Door
+GuiControlGet, GUIPos, Pos, MCSignOnDoorBox
+BoxW := GUIPosW
+;MC Backup Path field
+Gui, Add, Text, x20 yp+20 Section vMCSoDText, MCSoD Jar File: 
+GuiControlGet, GUIPos, Pos, MCSoDText
+Temp := BoxW - GUIPosW - 75
+Gui, Add, Edit, ys yp-3 w%Temp% -wrap -multi r1 vMCSoDJar, %MCSoDJar%
+Gui, Add, Button, ys yp-2 gMCSoDJarBrowse, Browse
+MCSoDJar_TT := "Please select the .jar file for MC Sign On Door"
+*/
+
 
 ;SHOW DAS GUI
 ;Gui, +Resize +MinSize
@@ -338,7 +373,6 @@ Menu, ConsoleBoxMenu, add, Copy, ConsoleCopy
 */
 OnMessage(0x200, "WM_MOUSEMOVE")
 SetTimer, MainTimer, 250
-SetTimer, RestartAtScheduler, 1000
 SetTimer, NetworkMonitor, 1000
 SetTimer, GetCharKeyPress, 100
 
@@ -382,6 +416,7 @@ ServerRunningTimer:
 return
 
 
+/*
 RestartAtScheduler:
   If (CheckForRestarts())
   {
@@ -389,10 +424,11 @@ RestartAtScheduler:
     InitiateAutomaticRestart()
   }
 return
+*/
 
 
 ServerUpTimer:
-  ;ServerUpTime := ServerUpTime + 1
+  ServerUpTime := ServerUpTime + 1
   If (CheckForRestarts())
   {
     WhatTerminated := "AUTO"
@@ -431,6 +467,7 @@ ServerStopTimer:
     SetTimer, ServerStopTimer, Off
     SetTimer, ServerRunningTimer, Off
     SetTimer, ServerUpTimer, Off
+    ;SetTimer, RestartAtScheduler, Off
     ServerWindowPID = 0
     ServerWindowID = 0
     ControlSwitcher("OFF")
@@ -439,6 +476,10 @@ ServerStopTimer:
     If (WhatTerminated = "AUTO")
     {
       Backup()
+    }
+    else
+    {
+      AddText("[GUI] Backups skipped when manually stopping the server.`n")
     }
     AddText("[GUI] Finished`n")
   }
@@ -478,16 +519,20 @@ AutomaticRestartTimer:
       SetTimer, AutomaticRestartTimer, Off
       return
     }
+    RestartCountDown := RestartCountDown - 1
+    return
   }
-  else
-  {
-    If (WarningTimesArray[WarningTimesIndex] = RestartCountDown)
-    {
-      WarningTimesIndex := WarningTimesIndex + 1
-      WarningMessage := "say Automatic restart in " . RestartTime := ConvertSecondstoMinSec(RestartCountDown) . ".  Please reconnect in approximately " . ConvertSecondstoMinSec(RestartCountDown + TimeToReconnect) . "."
 
+  If (WarningTimesArray[WarningTimesIndex] = RestartCountDown)
+  {
+    WarningMessage := "say Automatic restart in " . RestartTime := ConvertSecondstoMinSec(RestartCountDown) . "."
+    SendServer(WarningMessage)
+    If (WarningTimesIndex = WarningTimesArray.MaxIndex())
+    {
+      WarningMessage := "say Please reconnect in approximately " . ConvertSecondstoMinSec(RestartCountDown + TimeToReconnect) . "."      
       SendServer(WarningMessage)
     }
+    WarningTimesIndex := WarningTimesIndex + 1
   }
   RestartCountDown := RestartCountDown - 1
 return
@@ -576,6 +621,7 @@ MainProcess()
     ControlSwitcher("OFF")
     SetTimer, ServerRunningTimer, Off
     SetTimer, ServerUpTimer, Off
+    ;SetTimer, RestartAtScheduler, Off
   }
   WorkingSet := GetProcessMemory_WorkingSet(GUIPID, "M")
   GuiControl,, GUIMemUse, Memory Usage: %WorkingSet% M
@@ -629,10 +675,12 @@ InitializeVariables()
   ServerState := "OFF"
   WhatTerminated := "ERROR"
   
+  ;Set the file pointer at the end of the log file
   LogFile := FileOpen(MCServerPath . "\server.log", "a")
   LogFilePointer := LogFile.Tell()
   LogFile.Close()
-
+  
+  ;Initialize/Clear PlayerList array
   PlayerList := Object()
 }
 
@@ -1112,13 +1160,16 @@ StartServer()
     return 0
   }
   
+  ;If it made it this far, it should be good!
+  
   Global LongRestartTimes
   Global RestartTimes
+  SetServerStartTime()
   LongRestartTimes := ParseRestartTimes(RestartTimes)
+  ;SetTimer, RestartAtScheduler, 1000
   Global ServerUpTime
   ServerUpTime = 0
   SetTimer, ServerUpTimer, 1000
-  SetServerStartTime()
   
   Global ServerState
   
@@ -1712,27 +1763,278 @@ CheckForRestarts()
 ParseRestartTimes(Times)
 {
   Global ServerStartTime
-  LongTimes = 
+  LongTimes := ""
   Loop, Parse, Times, `,,%A_Space%
   {
     FoundMatch = 0
+    D := "-/:._,\\"
     DelimiterPattern := "-!@#%&=_:;',/``~\Q$^*()+{}[]\|?<>.\E"
-    If ((RegExMatch(A_LoopField, "ix)^((\d{4})[" . DelimiterPattern . "]?(0[1-9])|(\d{4})[" . DelimiterPattern . "]?(1[012])|(\d{2}|\d{4})[" . DelimiterPattern . "](1[012])|(\d{2}|\d{4})[" . DelimiterPattern . "]([1-9])|(\d{2}|\d{4})[" . DelimiterPattern . "](0[1-9]))([" . DelimiterPattern . "]([1-9])|[" . DelimiterPattern . "]?(0[1-9])|[" . DelimiterPattern . "]?([12]\d)|[" . DelimiterPattern . "]?(3[01]))\s([012]?\d)[" . DelimiterPattern . "]?([0-5]\d)?[" . DelimiterPattern . "]?([0-5]\d)?([ap]m)?$", Test)) and (!FoundMatch))
+    If ((RegExMatch(A_LoopField, "ix)^(?P<Year>\d{4})[" . D . "]?(?P<Month>(0\d|0?[1-9]|1[012]))[" . D . "]?(?P<Day>(0?[1-9]|[1-2]\d|3[01]))\s(?P<Hour>[012]?\d)[" . D . "]?(?P<Minute>[0-5]\d)?[" . D . "]?(?P<Second>[0-5]\d)?(?P<AP>[ap]m)?$", Time)) and (!FoundMatch))
     {
-      MsgBox, %Test%
+      If (StrLen(TimeMonth) = 1)
+      {
+        TimeMonth := "0" . TimeMonth
+      }
+      If (StrLen(TimeDay) = 1)
+      {
+        TimeDay := "0" . TimeDay
+      }
+      If ((TimeAP = "pm") and (TimeHour < 12))
+      {
+        TimeHour := TimeHour + 12
+        If (TimeHour = 24)
+        {
+          TimeHour = "00"
+        }
+      }
+      If (TimeHour = "")
+      {
+        TimeHour := "00"
+      }
+      If (TimeMinute = "")
+      {
+        TimeMinute := "00"
+      }
+      If (TimeSecond = "")
+      {
+        TimeSecond := "00"
+      }
+      If (StrLen(TimeHour) = 1)
+      {
+        TimeHour := "0" . TimeHour
+      }
+      If (StrLen(TimeMinute) = 1)
+      {
+        TimeMinute := "0" . TimeMinute
+      }
+      If (StrLen(TimeSecond) = 1)
+      {
+        TimeSecond := "0" . TimeSecond
+      }
+      LongTimes := LongTimes . TimeYear . TimeMonth . TimeDay . TimeHour . TimeMinute . TimeSecond . ","
       FoundMatch = 1
     }
-    if ((RegExMatch(A_LoopField, "ix)^([012]?\d)[" . DelimiterPattern . "]?([0-5]\d)?[" . DelimiterPattern . "]?([0-5]\d)?(?P<APM>[ap]m)?$", Test)) and (!FoundMatch))
+    If ((RegExMatch(A_LoopField, "ix)^(?P<Year>\d{2})[" . D . "]?(?P<Month>(0\d|0?[1-9]|1[012]))[" . D . "]?(?P<Day>(0?[1-9]|[1-2]\d|3[01]))\s(?P<Hour>[012]?\d)[" . D . "]?(?P<Minute>[0-5]\d)?[" . D . "]?(?P<Second>[0-5]\d)?\s?(?P<AP>[ap]m)?$", Time)) and (!FoundMatch))
     {
-      MsgBox, %Test%
+      TimeYear := SubStr(A_YYYY, 1, 2) . TimeYear
+      If (StrLen(TimeMonth) = 1)
+      {
+        TimeMonth := "0" . TimeMonth
+      }
+      If (StrLen(TimeDay) = 1)
+      {
+        TimeDay := "0" . TimeDay
+      }
+      If ((TimeAP = "pm") and (TimeHour < 12))
+      {
+        TimeHour := TimeHour + 12
+        If (TimeHour = 24)
+        {
+          TimeHour = "00"
+        }
+      }
+      If (TimeHour = "")
+      {
+        TimeHour := "00"
+      }
+      If (TimeMinute = "")
+      {
+        TimeMinute := "00"
+      }
+      If (TimeSecond = "")
+      {
+        TimeSecond := "00"
+      }
+      If (StrLen(TimeHour) = 1)
+      {
+        TimeHour := "0" . TimeHour
+      }
+      If (StrLen(TimeMinute) = 1)
+      {
+        TimeMinute := "0" . TimeMinute
+      }
+      If (StrLen(TimeSecond) = 1)
+      {
+        TimeSecond := "0" . TimeSecond
+      }
+      LongTimes := LongTimes . TimeYear . TimeMonth . TimeDay . TimeHour . TimeMinute . TimeSecond . ","
       FoundMatch = 1
     }
-    if ((RegExMatch(A_LoopField, "^((?P<Day>\d{1,2})(d|day|days))?\s?((?P<Hour>\d{1,2})(h|hr|hrs|hour|hours))?\s?((?P<Minute>\d{1,2})(m|min|mins|minutes))?\s?((?P<Second>\d{1,2})(s|sec|secs|seconds))?$", Test)) and (!FoundMatch))
+    if ((RegExMatch(A_LoopField, "ix)^(?P<Hour>[012]?\d)[" . D . "]?(?P<Minute>[0-5]\d)?[" . D . "]?(?P<Second>[0-5]\d)?\s?(?P<AP>[ap]m)?$", Time)) and (!FoundMatch))
     {
-      MsgBox, Days: %TestDay%`nHours: %TestHour%`nMinutes: %TestMinute%`nSeconds: %TestSecond%
+      If ((TimeAP = "pm") and (TimeHour < 12))
+      {
+        TimeHour := TimeHour + 12
+        If (TimeHour = 24)
+        {
+          TimeHour = "00"
+        }
+      }
+      If (TimeHour = "")
+      {
+        TimeHour := "00"
+      }
+      If (TimeMinute = "")
+      {
+        TimeMinute := "00"
+      }
+      If (TimeSecond = "")
+      {
+        TimeSecond := "00"
+      }
+      If (StrLen(TimeHour) = 1)
+      {
+        TimeHour := "0" . TimeHour
+      }
+      If (StrLen(TimeMinute) = 1)
+      {
+        TimeMinute := "0" . TimeMinute
+      }
+      If (StrLen(TimeSecond) = 1)
+      {
+        TimeSecond := "0" . TimeSecond
+      }
+      LongTimes := LongTimes . A_YYYY . A_MM . A_DD . TimeHour . TimeMinute . TimeSecond . ","
       FoundMatch = 1
+    }
+    If ((RegExMatch(A_LoopField, "^((?P<Day>\d{1,2})\s?(d|day|days))?\s?((?P<Hour>\d{1,2})\s?(h|hr|hrs|hour|hours))?\s?((?P<Minute>\d{1,2})\s?(m|min|mins|minutes))?\s?((?P<Second>\d{1,2})\s?(s|sec|secs|seconds))?$", Time)) and (!FoundMatch))
+    {
+      TimeMonth = 0
+      TimeYear = 0
+      If (TimeDay = "")
+      {
+        TimeDay := 0
+      }
+      If (TimeHour = "")
+      {
+        TimeHour := 0
+      }
+      If (TimeMinute = "")
+      {
+        TimeMinute := 0
+      }
+      If (TimeSecond = "")
+      {
+        TimeSecond := 0
+      }
+      
+      TimeSecond := SubStr(ServerStartTime, 13, 2) + TimeSecond
+      Loop
+      {
+        If (TimeSecond < 60)
+        {
+          break
+        }
+        TimeSecond := TimeSecond - 60
+        TimeMinute := TimeMinute + 1
+      }
+      TimeMinute := SubStr(ServerStartTime, 11, 2) + TimeMinute
+      Loop
+      {
+        If (TimeMinute < 60)
+        {
+          break
+        }
+        TimeMinute := TimeMinute - 60
+        TimeHour := TimeHour + 1
+      }
+      TimeHour := SubStr(ServerStartTime, 9, 2) + TimeHour
+      Loop
+      {
+        If (TimeHour < 24)
+        {
+          break
+        }
+        TimeHour := TimeHour - 24
+        TimeDay := TimeDay + 1
+      }
+      TimeDay := SubStr(ServerStartTime, 7, 2) + TimeDay
+      Loop
+      {
+        If ((RegExMatch(SubStr(ServerStartTime, 5, 2), "(01|03|05|07|08|10|12)")) and (TimeDay <= 31))
+        {
+          break
+        }
+        If ((RegExMatch(SubStr(ServerStartTime, 5, 2), "(04|06|09|11)")) and (TimeDay <= 30))
+        {
+          break
+        }
+        LeapYear = 0
+        TempYear := SubStr(ServerStartTime, 1, 4)
+        If (!InStr((TempYear / 4), "."))
+        {
+          LeapYear = 1
+          If (!InStr((TempYear / 100), "."))
+          {
+            LeapYear = 0
+            If (!InStr((TempYear / 400), "."))
+            {
+              LeapYear = 1
+            }
+          }
+        }
+        If ((SubStr(ServerStartTime, 5, 2) = "02") and (LeapYear) and (TimeDay <= 29))
+        {
+          break
+        }
+        If ((SubStr(ServerStartTime, 5, 2) = "02") and (!LeapYear) and (TimeDay <= 28))
+        {
+          break
+        }
+        If (RegExMatch(SubStr(ServerStartTime, 5, 2), "(01|03|05|07|08|10|12)"))
+        {
+          TimeDay := TimeDay - 31
+        }
+        If (RegExMatch(SubStr(ServerStartTime, 5, 2), "(04|06|09|11)"))
+        {
+          TimeDay := TimeDay - 31
+        }
+        If ((SubStr(ServerStartTime, 5, 2) = "02") and (LeapYear))
+        {
+          TimeDay := TimeDay - 29
+        }
+        If ((SubStr(ServerStartTime, 5, 2) = "02") and (!LeapYear))
+        {
+          TimeDay := TimeDay - 28
+        }
+        TimeMonth := TimeMonth + 1
+      }
+      TimeMonth := SubStr(ServerStartTime, 5, 2) + TimeMonth
+      FoundMatch = 1
+      Loop
+      {
+        If (TimeMonth < 12)
+        {
+          Break
+        }
+        TimeMonth := TimeMonth - 12
+        TimeYear := TimeYear + 1
+      }
+      If (StrLen(TimeMonth) = 1)
+      {
+        TimeMonth := "0" + TimeMonth
+      }
+      If (StrLen(TimeDay) = 1)
+      {
+        TimeDay := "0" + TimeDay
+      }
+      If (StrLen(TimeHour) = 1)
+      {
+        TimeHour := "0" + TimeHour
+      }
+      If (StrLen(TimeMinute) = 1)
+      {
+        TimeMinute := "0" + TimeMinute
+      }
+      If (StrLen(TimeSecond) = 1)
+      {
+        TimeSecond := "0" + TimeSecond
+      }
+      TimeYear := SubStr(ServerStartTime, 1, 4) + TimeYear
+      LongTimes := Longtimes . TimeYear . TimeMonth . TimeDay . TimeHour . TimeMinute . TimeSecond . ","
     }
   }
+  Return LongTimes
 }
 
 
@@ -1747,10 +2049,11 @@ InitiateAutomaticRestart()
     Global WarningTimesIndex
   
     WarningTimesArray := CSVtoArray(WarningTimes)
-    RestartCountDown := WarningTimesArray[1]
+    RestartCountDown := WarningTimesArray[1] + 1
     WarningTimesIndex = 1
     
     SetTimer, AutomaticRestartTimer, 1000
+    GoSub, AutomaticRestartTimer
   }
   else
   {
@@ -1888,7 +2191,10 @@ GUIUpdate()
     
     GuiControlGet, RestartTimes,, RestartTimes
     SetConfigKey("Timing", "RestartTimes", RestartTimes)
-    LongRestartTimes := ParseRestartTimes(RestartTimes)
+    If (ServerIsRunning)
+    {
+      LongRestartTimes := ParseRestartTimes(RestartTimes)
+    }
     
     GuiControlGet, WarningTimes,, WarningTimes
     SetConfigKey("Timing", "WarningTimes", WarningTimes)
@@ -2067,7 +2373,7 @@ WM_MOUSEMOVE()
     DisplayToolTip:
       SetTimer, DisplayToolTip, Off
       ToolTip % %CurrControl%_TT  ; The leading percent sign tell it to use an expression.
-      SetTimer, RemoveToolTip, 5000
+      SetTimer, RemoveToolTip, 20000
     return
 
     RemoveToolTip:
@@ -2271,8 +2577,17 @@ GuiClose:
   If(ServerIsRunning())
   {
     WhatTerminated := "USER"
-    AddText("`n[GUI]Stopping server first...")
+    AddText("[GUI]Stopping server first...`n")
     StopServer()
+    Loop
+    {
+      Process, Exist, MCServerWindowPID
+      If (!ErrorLevel)
+      {
+        break
+      }
+    }
+    sleep % UpdateRate * 2
   }
   ExitApp
 return
