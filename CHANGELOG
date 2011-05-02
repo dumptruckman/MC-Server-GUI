@@ -1,4 +1,4 @@
-Version .6.2-dev
+Version .6.2
   Added server up time display
   Re-added Show Java Console toggle since there is still some server start issues
   Added "Auto-Restart In" time indication
@@ -7,6 +7,7 @@ Version .6.2-dev
   Split source code into multiple files
   Added new Automate Backups checkbox... No new functionality, just makes it simpler to run manual backups
   Corrected restart behavior so that if you start the server during an automated restart, it will not immediately restart the server upon next stop
+  Fixed bug where restart times (without date) earlier than current time would get skipped
 
 Version .6.1
   Restart times can be entered in a whole lot more formats. examples: 2011/1/24 10pm, 11am, 5:55:05

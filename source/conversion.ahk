@@ -152,6 +152,9 @@ ParseRestartTimes(Times)
     }
     if ((RegExMatch(A_LoopField, "ix)^(?P<Hour>[012]?\d)[" . D . "]?(?P<Minute>[0-5]\d)?[" . D . "]?(?P<Second>[0-5]\d)?\s?(?P<AP>[ap]m)?$", Time)) and (!FoundMatch))
     {
+      TimeYear := A_YYYY
+      TimeMonth := A_MM
+      TimeDay := A_DD
       If ((TimeAP = "pm") and (TimeHour < 12))
       {
         TimeHour := TimeHour + 12
@@ -184,7 +187,63 @@ ParseRestartTimes(Times)
       {
         TimeSecond := "0" . TimeSecond
       }
-      LongTimes := LongTimes . A_YYYY . A_MM . A_DD . TimeHour . TimeMinute . TimeSecond . ","
+      Temp := TimeYear . TimeMonth . TimeDay . TimeHour . TimeMinute . TimeSecond
+      If (GetCurrentTime() > Temp)
+      {
+        TimeDay := TimeDay + 1
+        If ((RegExMatch(TimeMonth, "^(01|03|05|07|08|10|12)$")) and (TimeDay > 31))
+        {
+          TimeDay := "01"
+          TimeMonth := TimeMonth + 1
+          If (TimeMonth = 13)
+          {
+            TimeMonth := "01"
+            TimeYear := TimeYear + 1
+          }
+          If (StrLen(TimeMonth) = 1)
+          {
+            TimeMonth := "0" . TimeMonth
+          }
+        }
+        If ((RegExMatch(TimeMonth, "^(04|06|09|11)$")) and (TimeDay > 30))
+        {
+          TimeDay := "01"
+          TimeMonth := TimeMonth + 1
+          If (StrLen(TimeMonth) = 1)
+          {
+            TimeMonth := "0" . TimeMonth
+          }
+        }
+        LeapYear = 0
+        If (!InStr((TimeYear / 4), "."))
+        {
+          LeapYear = 1
+          If (!InStr((TimeYear / 100), "."))
+          {
+            LeapYear = 0
+            If (!InStr((TimeYear / 400), "."))
+            {
+              LeapYear = 1
+            }
+          }
+        }
+        If ((TimeMonth = 2) and (LeapYear) and (TimeDay > 29))
+        {
+          TimeDay := "01"
+          TimeMonth := "03"
+        }
+        If ((TimeMonth = 2) and (!LeapYear) and (TimeDay > 28))
+        {
+          TimeDay := "01"
+          TimeMonth := "03"
+        }
+        If (StrLen(TimeDay) = 1)
+        {
+          TimeDay := "0" . TimeDay
+        }
+      }
+      LongTimes := LongTimes . TimeYear . TimeMonth . TimeDay . TimeHour . TimeMinute . TimeSecond . ","
+      
       FoundMatch = 1
     }
     If ((RegExMatch(A_LoopField, "^((?P<Day>\d{1,2})\s?(d|day|days))?\s?((?P<Hour>\d{1,2})\s?(h|hr|hrs|hour|hours))?\s?((?P<Minute>\d{1,2})\s?(m|min|mins|minutes))?\s?((?P<Second>\d{1,2})\s?(s|sec|secs|seconds))?$", Time)) and (!FoundMatch))

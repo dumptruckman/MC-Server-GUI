@@ -244,7 +244,7 @@ GetSoonestRestart()
   Temp := 99999999999999
   Loop, Parse, LongRestartTimes, `, 
   {
-    If ((A_LoopField <= Temp) and (A_LoopField != ""))
+    If ((A_LoopField <= Temp) and (A_LoopField != "") and (A_LoopField >= GetCurrentTime()))
     {
       Temp := A_LoopField
     }
