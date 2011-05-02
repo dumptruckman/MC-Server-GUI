@@ -8,7 +8,7 @@
 VersionNumber := ".6.2-dev"
 
 ;Include Libraries
-#Include RichEdit.ahk
+#Include lib\RichEdit.ahk
 
 ;Initialize Internal Global Variables
 ServerWindowPID = 0
@@ -39,8 +39,8 @@ ServerProperties := ReadServerProps()               ;Grab data from server.prope
 
 
 ;Load GUI and Menu Source
-#Include gui.ahk
-#Include menus.ahk
+#Include source\gui.ahk
+#Include source\menus.ahk
 
 
 ;SHOW DAS GUI
@@ -85,13 +85,13 @@ return
 
 
 ;Load Remaining Source
-#Include timers.ahk
-#Include guicontrol.ahk
-#Include datahandling.ahk
-#Include serverprocesses.ahk
-#Include automation.ahk
-#Include conversion.ahk
-#Include cpumem.ahk
+#Include source\timers.ahk
+#Include source\guicontrol.ahk
+#Include source\datahandling.ahk
+#Include source\serverprocesses.ahk
+#Include source\automation.ahk
+#Include source\conversion.ahk
+#Include source\cpumem.ahk
 
 
 ;Main Process that runs at %UpdateRate% intervals
