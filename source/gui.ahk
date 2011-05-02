@@ -47,7 +47,9 @@ Gui, Add, Button, ys gImmediateRestart vImmediateRestart, Immediate Restart
 ImmediateRestart_TT := "This will restart the server without warning the players"
 ;Gui, Add, Button, ys gStopServer vStopServer, Stop Server
 ;StopServer_TT := "This will stop the server immediately"
-Gui, Add, Button, xs vJavaToggle gJavaToggle, Show Java Console
+GuiControlGet, GUIPos, Pos, ServerControlBox
+GUIPosW := GUIPosW - 20
+Gui, Add, Button, xs w%GUIPosW% vJavaToggle gJavaToggle, Show Java Console
 JavaToggle_TT := "This will show/hide the Java Console running in the background.  This feature was added for debugging purposes and may be removed later"
 GuiControl, Disable, JavaToggle ;Disable toggle at startup
 ;GuiControl, Disable, SaveWorlds
@@ -99,10 +101,13 @@ GUIPosX := GUIPosX + GUIPosW + 5
 BoxH := BoxH + GUIPosH
 Gui, Add, GroupBox, x%GUIPosX% y%GUIPosY% w%BoxW% h%BoxH%, Backup Control
 ;Checkboxes for whether or not to backup worlds/log
-Gui, Add, CheckBox, xp+10 yp+15 Section vWorldBackups gWorldBackups, Run World Backups
+Gui, Add, CheckBox, xp+10 yp+15 Section vAutomateBackups gAutomateBackups, Automate Backups
+AutomateBackups_TT := "Whether or not to perform backups on automatic restarts"
+GuiControl,, AutomateBackups, %AutomateBackups%
+Gui, Add, CheckBox, xs vWorldBackups gWorldBackups, Backup Worlds
 WorldBackups_TT := "Whether world folders will be backed up when automatically restarted or when manual backup is pressed."
 GuiControl,, WorldBackups, %WorldBackups%
-Gui, Add, CheckBox, xs vLogBackups gLogBackups, Run Log Backups
+Gui, Add, CheckBox, xs vLogBackups gLogBackups, Backup server.log
 LogBackups_TT := "Whether server.log will be backed up when automatically restarted or when manual backup is pressed."
 GuiControl,, LogBackups, %LogBackups%
 ;Checkbox for Zipping backups

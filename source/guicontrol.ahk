@@ -421,6 +421,7 @@ StartStopServer:
   GuiControlGet, StartStopServer, , StartStopServer
   If (StartStopServer = "Start Server")
   {
+    SetTimer, WaitForRestartTimer, Off
     StartServer()
   }
   else
@@ -554,17 +555,24 @@ ConsoleCopy:
 return
 
 
+AutomateBackups:
+  Gui, Submit, NoHide
+  GuiControlGet, AutomateBackups,, AutomateBackups
+  SetConfigKey("Backups", "AutomateBackups", AutomateBackups)
+return
+
+
 WorldBackups:
   Gui, Submit, NoHide
   GuiControlGet, WorldBackups,, WorldBackups
-  SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
+  SetConfigKey("Backups", "WorldBackups", WorldBackups)
 return
 
 
 LogBackups:
   Gui, Submit, NoHide
   GuiControlGet, LogBackups,, LogBackups
-  SetConfigKey("Backups", "RunLogBackups", LogBackups)
+  SetConfigKey("Backups", "LogBackups", LogBackups)
 return
 
 

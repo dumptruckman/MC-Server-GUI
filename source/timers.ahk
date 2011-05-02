@@ -67,7 +67,14 @@ ServerStopTimer:
     AddText("[GUI] Server Stopped`n")
     If (WhatTerminated = "AUTO")
     {
-      Backup()
+      If (AutomatemateBackups)
+      {
+        Backup()
+      }
+      else
+      {
+        AddText("[GUI] Automatic backups are disabled...skipping.`n")
+      }
     }
     else
     {
@@ -93,6 +100,10 @@ WaitForRestartTimer:
       Loop
       {
         If (StartServer())
+        {
+          break
+        }
+        If (ServerState = "ON")
         {
           break
         }

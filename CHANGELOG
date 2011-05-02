@@ -5,6 +5,8 @@ Version .6.2-dev
   Added count to Player List
   GUI automatically creates a backup folder if one does not already exist
   Split source code into multiple files
+  Added new Automate Backups checkbox... No new functionality, just makes it simpler to run manual backups
+  Corrected restart behavior so that if you start the server during an automated restart, it will not immediately restart the server upon next stop
 
 Version .6.1
   Restart times can be entered in a whole lot more formats. examples: 2011/1/24 10pm, 11am, 5:55:05
