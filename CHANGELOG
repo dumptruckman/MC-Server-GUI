@@ -1,3 +1,11 @@
+Version .6.2-dev
+  Added server up time display
+  Re-added Show Java Console toggle since there is still some server start issues
+  Added "Auto-Restart In" time indication
+  Added count to Player List
+  GUI automatically creates a backup folder if one does not already exist
+  Split source code into multiple files
+
 Version .6.1
   Restart times can be entered in a whole lot more formats. examples: 2011/1/24 10pm, 11am, 5:55:05
   Can also enter one additional time which is how long after server start to restart. example: 10h40m
