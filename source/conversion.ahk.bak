@@ -216,7 +216,8 @@ ParseRestartTimes(Times) {
       TimeSecond := SubStr(ServerStartTime, 13, 2) + TimeSecond
       Loop
       {
-        If (TimeSecond < 60) {
+        If (TimeSecond < 60)
+        {
           break
         }
         TimeSecond := TimeSecond - 60
@@ -225,7 +226,8 @@ ParseRestartTimes(Times) {
       TimeMinute := SubStr(ServerStartTime, 11, 2) + TimeMinute
       Loop
       {
-        If (TimeMinute < 60) {
+        If (TimeMinute < 60)
+        {
           break
         }
         TimeMinute := TimeMinute - 60
@@ -234,7 +236,8 @@ ParseRestartTimes(Times) {
       TimeHour := SubStr(ServerStartTime, 9, 2) + TimeHour
       Loop
       {
-        If (TimeHour < 24) {
+        If (TimeHour < 24)
+        {
           break
         }
         TimeHour := TimeHour - 24
@@ -243,39 +246,50 @@ ParseRestartTimes(Times) {
       TimeDay := SubStr(ServerStartTime, 7, 2) + TimeDay
       Loop
       {
-        If ((RegExMatch(SubStr(ServerStartTime, 5, 2), "(01|03|05|07|08|10|12)")) and (TimeDay <= 31)) {
+        If ((RegExMatch(SubStr(ServerStartTime, 5, 2), "(01|03|05|07|08|10|12)")) and (TimeDay <= 31))
+        {
           break
         }
-        If ((RegExMatch(SubStr(ServerStartTime, 5, 2), "(04|06|09|11)")) and (TimeDay <= 30)) {
+        If ((RegExMatch(SubStr(ServerStartTime, 5, 2), "(04|06|09|11)")) and (TimeDay <= 30))
+        {
           break
         }
         LeapYear = 0
         TempYear := SubStr(ServerStartTime, 1, 4)
-        If (!InStr((TempYear / 4), ".")) {
+        If (!InStr((TempYear / 4), "."))
+        {
           LeapYear = 1
-          If (!InStr((TempYear / 100), ".")) {
+          If (!InStr((TempYear / 100), "."))
+          {
             LeapYear = 0
-            If (!InStr((TempYear / 400), ".")) {
+            If (!InStr((TempYear / 400), "."))
+            {
               LeapYear = 1
             }
           }
         }
-        If ((SubStr(ServerStartTime, 5, 2) = "02") and (LeapYear) and (TimeDay <= 29)) {
+        If ((SubStr(ServerStartTime, 5, 2) = "02") and (LeapYear) and (TimeDay <= 29))
+        {
           break
         }
-        If ((SubStr(ServerStartTime, 5, 2) = "02") and (!LeapYear) and (TimeDay <= 28)) {
+        If ((SubStr(ServerStartTime, 5, 2) = "02") and (!LeapYear) and (TimeDay <= 28))
+        {
           break
         }
-        If (RegExMatch(SubStr(ServerStartTime, 5, 2), "(01|03|05|07|08|10|12)")) {
+        If (RegExMatch(SubStr(ServerStartTime, 5, 2), "(01|03|05|07|08|10|12)"))
+        {
           TimeDay := TimeDay - 31
         }
-        If (RegExMatch(SubStr(ServerStartTime, 5, 2), "(04|06|09|11)")) {
+        If (RegExMatch(SubStr(ServerStartTime, 5, 2), "(04|06|09|11)"))
+        {
           TimeDay := TimeDay - 31
         }
-        If ((SubStr(ServerStartTime, 5, 2) = "02") and (LeapYear)) {
+        If ((SubStr(ServerStartTime, 5, 2) = "02") and (LeapYear))
+        {
           TimeDay := TimeDay - 29
         }
-        If ((SubStr(ServerStartTime, 5, 2) = "02") and (!LeapYear)) {
+        If ((SubStr(ServerStartTime, 5, 2) = "02") and (!LeapYear))
+        {
           TimeDay := TimeDay - 28
         }
         TimeMonth := TimeMonth + 1
@@ -284,25 +298,31 @@ ParseRestartTimes(Times) {
       FoundMatch = 1
       Loop
       {
-        If (TimeMonth < 12) {
+        If (TimeMonth < 12)
+        {
           Break
         }
         TimeMonth := TimeMonth - 12
         TimeYear := TimeYear + 1
       }
-      If (StrLen(TimeMonth) = 1) {
+      If (StrLen(TimeMonth) = 1)
+      {
         TimeMonth := "0" + TimeMonth
       }
-      If (StrLen(TimeDay) = 1) {
+      If (StrLen(TimeDay) = 1)
+      {
         TimeDay := "0" + TimeDay
       }
-      If (StrLen(TimeHour) = 1) {
+      If (StrLen(TimeHour) = 1)
+      {
         TimeHour := "0" + TimeHour
       }
-      If (StrLen(TimeMinute) = 1) {
+      If (StrLen(TimeMinute) = 1)
+      {
         TimeMinute := "0" + TimeMinute
       }
-      If (StrLen(TimeSecond) = 1) {
+      If (StrLen(TimeSecond) = 1)
+      {
         TimeSecond := "0" + TimeSecond
       }
       TimeYear := SubStr(ServerStartTime, 1, 4) + TimeYear

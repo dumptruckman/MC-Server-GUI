@@ -21,7 +21,8 @@ AutoDetectServerJar() {
 }
 
 
-Backup() {
+Backup()
+{
   Global LogBackups
   Global WorldBackups
   Global IsBackingUp
@@ -221,14 +222,16 @@ InitiateAutomaticRestart() {
 }
 
 
-AutomaticRestart() {  
+AutomaticRestart()
+{  
   Global RestartDelay
   
   SendServer("save-all")
   StopServer()
   Temp := RestartDelay * 1000
   SetTimer, WaitForRestartTimer, %Temp%
-  If (DebugMode()) {
+  If (DebugMode())
+  {
     Debug("WaitForRestartTimer", Temp)
   }
 }

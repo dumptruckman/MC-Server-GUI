@@ -1,4 +1,3 @@
-Repeat player names on player list after restart
 Slight delay after pressing warning restart before restart message
 Sometimes upon starting the server, the console output remains blank. Restarting the server seems to fix this.
 Players with nick names will be dropped from the list ocassionally

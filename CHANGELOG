@@ -1,3 +1,13 @@
+Version .6.3
+  Player list should no longer display duplicate players
+  Fixed bug where Next Restart time would reset to the next restart time shortly after saying it was commencing the first one
+  Possibly fixed a potential bugs that would cause restarts to be skipped
+  Added Debug Mode
+  POSSIBLY fixed issue where console would remain blank on server start
+  Now minimizes to the system tray
+  System tray icon's tooltip shows server status and if UP, online player count
+  Possibly fixed bug where server up time would stop displaying
+  
 Version .6.2
   Added server up time display
   Re-added Show Java Console toggle since there is still some server start issues

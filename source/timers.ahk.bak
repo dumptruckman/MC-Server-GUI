@@ -163,22 +163,28 @@ NetworkMonitor:
   BytesDataTx = %BytesDataTx%
   DisplayBytesRx := BytesDataRx - LastBytesDataRx
   DisplayBytesTx := BytesDataTx - LastBytesDataTx
-  If (DisplayBytesRx < 1024) {
+  If (DisplayBytesRx < 1024)
+  {
     DisplayBytesRx := DisplayBytesRx . " B/s"
   }
-  else If ((DisplayBytesRx >= 1024) and (DisplayBytesRx < 1048576)) {
+  else If ((DisplayBytesRx >= 1024) and (DisplayBytesRx < 1048576))
+  {
     DisplayBytesRx := (DisplayBytesRx / 1024) . " KB/s"
   }
-  else If (DisplayBytesRx >= 1048576) {
+  else If (DisplayBytesRx >= 1048576)
+  {
     DisplayBytesRx := (DisplayBytesRx / 1048576) . " MB/s"
   }
-  If (DisplayBytesTx < 1024) {
+  If (DisplayBytesTx < 1024)
+  {
     DisplayBytesTx := DisplayBytesTx . " B/s"
   }
-  else If ((DisplayBytesTx >= 1024) and (DisplayBytesTx < 1048576)) {
+  else If ((DisplayBytesTx >= 1024) and (DisplayBytesTx < 1048576))
+  {
     DisplayBytesTx := (DisplayBytesTx / 1024) . " KB/s"
   }
-  else If (DisplayBytesTx >= 1048576) {
+  else If (DisplayBytesTx >= 1048576)
+  {
     DisplayBytesTx := (DisplayBytesTx / 1048576) . " MB/s"
   }
   GuiControl, , BytesRxPerSecond, %DisplayBytesRx%

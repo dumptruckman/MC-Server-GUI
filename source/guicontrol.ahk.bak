@@ -582,14 +582,16 @@ Return
 
 
 GuiClose:
-  If(ServerIsRunning()) {
+  If(ServerIsRunning())
+  {
     WhatTerminated := "USER"
     AddText("[GUI]Stopping server first...`n")
     StopServer()
     Loop
     {
       Process, Exist, MCServerWindowPID
-      If (!ErrorLevel) {
+      If (!ErrorLevel)
+      {
         break
       }
     }

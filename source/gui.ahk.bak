@@ -21,7 +21,8 @@ RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
 Gui, Add, GroupBox, ys Section w200 h275 vPlayerListBox, Player List
 Gui, Add, TreeView, xp+10 yp+15 w180 h250 vPlayerList AltSubmit -Buttons -Lines
 
-If (DebugMode) {
+If (DebugMode)
+{
   Gui, Add, GroupBox, ys Section w300 h275 vDebugBox, Debugging
   Gui, Add, ListView, xp+10 yp+15 w280 h245 vDebug, Data|Value
 }

@@ -84,7 +84,8 @@ GetServerProcessTimes(pid) {    ; Individual CPU Load of the process with pid
 }
 
 
-GetGUIProcessTimes(pid) {   ; Individual CPU Load of the process with pid
+GetGUIProcessTimes(pid)    ; Individual CPU Load of the process with pid
+{
    Static goldKrnlTime, goldUserTime
    Static gnewKrnlTime, gnewUserTime
 

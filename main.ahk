@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".6.2"
+VersionNumber := ".6.3"
 
 ;Include Libraries
 #Include lib\RichEdit.ahk
@@ -41,6 +41,9 @@ ServerProperties := ReadServerProps()               ;Grab data from server.prope
 ;Load GUI and Menu Source
 #Include source\gui.ahk
 #Include source\menus.ahk
+If (DebugMode) {
+  #Include source\debug.ahk
+}
 
 
 ;SHOW DAS GUI
@@ -58,28 +61,31 @@ OnMessage(0x200, "WM_MOUSEMOVE")
 SetTimer, MainTimer, 250
 SetTimer, NetworkMonitor, 1000
 SetTimer, GetCharKeyPress, 100
+If (DebugMode()) {
+  Debug := Object()
+  ;Debug("MainTimer", "250")
+  ;Debug("NetworkMonitor(Timer)", "1000")
+  ;Debug("GetCharKeyPress(Timer)", "100")
+}
 
-If ((MCServerJar = "Set this") or (MCServerJar = ""))
-{
+If ((MCServerJar = "Set this") or (MCServerJar = "")) {
   ServerJar := AutoDetectServerJar()
-  If (ServerJar)
-  {
+  If (ServerJar) {
     MCServerJar := ServerJar
     SplitPath, MCServerJar, MCServerJar, MCServerPath
     SetConfigKey("Folders", "ServerPath", MCServerPath)
     SetConfigKey("ServerArguments", "ServerJarFile", MCServerJar)
     AddText("[GUI] Autodetected " . MCServerJar . " as your Minecraft server jar file.  Please make corrections in Server Config if this is wrong.")
   }
-  else
-  {
+  else {
     AddText("[GUI] Could not locate a server jar file.  Please set this manually under Server Config.")
   }
 }
 
-If (ServerStartOnStartup)
-{
+If (ServerStartOnStartup) {
   StartServer()
 }
+
 return
 
 
@@ -95,14 +101,12 @@ return
 
 
 ;Main Process that runs at %UpdateRate% intervals
-MainProcess()
-{
+MainProcess() {
   Global ServerWindowPID
   Global ConsoleBox
   Global GUIPID
   
-  If (ServerIsRunning())
-  {
+  If (ServerIsRunning()) {
     ControlSwitcher("ON")
     
     CommitSize := GetProcessMemory_CommitSize(ServerWindowPID, "M")
@@ -111,17 +115,19 @@ MainProcess()
     CPULoad := GetServerProcessTimes(ServerWindowPID)
     GuiControl,, ServerCPUUse, CPU Load: %CPULoad%`%
   }
-  else
-  {
+  else {
     Global ServerState
     
-    If (ServerState == "ON")
-    {
+    If (ServerState == "ON") {
       StopServer()
     }
     ControlSwitcher("OFF")
     SetTimer, ServerRunningTimer, Off
     SetTimer, ServerUpTimer, Off
+    If (DebugMode()) {
+      Debug("ServerRunningTimer", "Off")
+      Debug("ServerUpTimer", "Off")
+    }
     ;SetTimer, RestartAtScheduler, Off
   }
   WorkingSet := GetProcessMemory_WorkingSet(GUIPID, "M")
