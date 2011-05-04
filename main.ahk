@@ -100,35 +100,57 @@ return
 #Include source\cpumem.ahk
 
 
-;Main Process that runs at %UpdateRate% intervals
 MainProcess() {
   Global ServerWindowPID
   Global ConsoleBox
   Global GUIPID
   
   If (ServerIsRunning()) {
-    ControlSwitcher("ON")
+    Global IsAutomated
+    Global ServerStarted
     
+    ControlSwitcher("ON")
+    ;GetLog()
+    If (ServerStarted) {
+      SetTimer, ServerRunningTimer, On
+    }
     CommitSize := GetProcessMemory_CommitSize(ServerWindowPID, "M")
     WorkingSet := GetProcessMemory_WorkingSet(ServerWindowPID, "M")
     GuiControl,, ServerMemUse, Memory Usage: %WorkingSet% M / %CommitSize% M
     CPULoad := GetServerProcessTimes(ServerWindowPID)
     GuiControl,, ServerCPUUse, CPU Load: %CPULoad%`%
+    
+    If ((CheckForRestarts()) and (!IsAutomated)) {
+      WhatTerminated := "AUTO"
+      InitiateAutomaticRestart()
+    }
+
+    IfWinActive, ahk_pid %GUIPID%
+    {
+      GuiThreadInfoSize = 48
+      VarSetCapacity(GuiThreadInfo, GuiThreadInfoSize)
+      NumPut(GuiThreadInfoSize, GuiThreadInfo, 0)
+      if not DllCall("GetGUIThreadInfo", uint, 0, str, GuiThreadInfo) {
+          MsgBox GetGUIThreadInfo() indicated a failure.
+          return
+      }
+      FocusedHWND := NumGet(GuiThreadInfo, 12)  ; Retrieve the hwndFocus field from the struct.
+      Global ConsoleBox
+      If (FocusedHWND != ConsoleBox) {
+        EoT := RichEdit_GetTextLength(ConsoleBox)
+        RichEdit_SetSel(ConsoleBox, EoT)
+      }
+    }
   }
   else {
     Global ServerState
     
-    If (ServerState == "ON") {
+    If (ServerState == "ON" AND ServerStarted) {
       StopServer()
     }
     ControlSwitcher("OFF")
     SetTimer, ServerRunningTimer, Off
-    SetTimer, ServerUpTimer, Off
-    If (DebugMode()) {
-      Debug("ServerRunningTimer", "Off")
-      Debug("ServerUpTimer", "Off")
-    }
-    ;SetTimer, RestartAtScheduler, Off
+    ;SetTimer, ServerUpTimer, Off
   }
   WorkingSet := GetProcessMemory_WorkingSet(GUIPID, "M")
   GuiControl,, GUIMemUse, Memory Usage: %WorkingSet% M

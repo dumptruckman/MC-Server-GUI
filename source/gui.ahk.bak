@@ -50,7 +50,7 @@ BackupSave_TT := "Pressing this will backup the world folders specified in GUI C
 ;SaveWorlds_TT := "This is the same as typing save-all"
 Gui, Add, Button, xs Section gWarnRestart vWarnRestart, Warn Restart
 WarnRestart_TT := "This will give warnings to the players at the intervals specified in the config before restarting"
-Gui, Add, Button, ys w100 gImmediateRestart vImmediateRestart, Immediate Restart
+Gui, Add, Button, ys gImmediateRestart vImmediateRestart, Immediate Restart
 ImmediateRestart_TT := "This will restart the server without warning the players"
 ;Gui, Add, Button, ys gStopServer vStopServer, Stop Server
 ;StopServer_TT := "This will stop the server immediately"

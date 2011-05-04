@@ -512,7 +512,7 @@ PL_Kick:
   PlayerListSelection := TV_GetSelection()
   TV_GetText(PlayerName, PlayerListSelection)
   SendServer("kick " . PlayerName)
-  RemoveFromPlayerList(PlayerName)
+  ;RemoveFromPlayerList(PlayerName)
 return
 
 

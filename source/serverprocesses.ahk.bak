@@ -260,7 +260,7 @@ StartServer() {
     Debug("Server Start Process", "Starting log update timer")
   }
   ServerStarted = 1
-  SetTimer, ServerRunningTimer, 250
+  SetTimer, ServerRunningTimer, 50
   If (DebugMode()) {
     Debug("Server Start Process", "Complete!")
   }

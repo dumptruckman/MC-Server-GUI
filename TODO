@@ -6,7 +6,6 @@ Compatibility with many other plugins (mcMMO or iConomy for instance)
 Server file manipulation (like installing/configuring plugins)
 More Error Checking
 Resizeable GUI
-Minimize to tray
 Extra restart messages?
 Customizable restart messages
 Full, archived, backups of server (plugins and all)
@@ -17,4 +16,3 @@ Possibly have cooperability with something like MccRestart
 Detect 7za exit codes
 Delete backups after x amount of time or x amount of backups
 Add compatibility with MCSoD
-Detect player kicks

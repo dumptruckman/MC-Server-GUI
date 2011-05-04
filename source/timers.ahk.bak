@@ -60,7 +60,7 @@ ServerStopTimer:
     ;SetTimer, ServerUpTimer, Off
     If (DebugMode()) {
       Debug("ServerStopTimer", "Off")
-      ;Debug("ServerRunningTimer", "Off")
+      Debug("ServerRunningTimer", "Off")
       ;Debug("ServerUpTimer", "Off")
     }
     ;SetTimer, RestartAtScheduler, Off

@@ -1,12 +1,16 @@
 Version .6.3
   Player list should no longer display duplicate players
   Fixed bug where Next Restart time would reset to the next restart time shortly after saying it was commencing the first one
-  Possibly fixed a potential bugs that would cause restarts to be skipped
+  Possibly fixed a bug that would cause restarts (and therefore backups) to be skipped
   Added Debug Mode
-  POSSIBLY fixed issue where console would remain blank on server start
+  Fixed issue where console would remain blank on server start
   Now minimizes to the system tray
   System tray icon's tooltip shows server status and if UP, online player count
   Possibly fixed bug where server up time would stop displaying
+  Fixed issue where sometimes the GUI would erroneously think that there was a Java error upon starting the server
+  Removed Update Rate setting as it is no longer used
+  The console output should resume scrolling normally when you're not focused on it (such as selecting text within it)
+  Should now detect players being kicked by alternate means
   
 Version .6.2
   Added server up time display
