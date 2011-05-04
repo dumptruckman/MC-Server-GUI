@@ -195,7 +195,7 @@ GUIUpdate() {
     
     GuiControlGet, RestartTimes,, RestartTimes
     SetConfigKey("Timing", "RestartTimes", RestartTimes)
-    If (ServerIsRunning) {
+    If (ServerIsRunning()) {
       LongRestartTimes := ParseRestartTimes(RestartTimes)
     }
     SoonestRestart := GetSoonestRestart()

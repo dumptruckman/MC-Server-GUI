@@ -1,3 +1,6 @@
+Version .6.4
+  Fix for restart times not updating correctly while the server is running
+
 Version .6.3
   Player list should no longer display duplicate players
   Fixed bug where Next Restart time would reset to the next restart time shortly after saying it was commencing the first one

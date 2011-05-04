@@ -187,7 +187,7 @@ BackupLog(backupfolder) {
 
 CheckForRestarts() {
   Global LongRestartTimes
-
+  Debug("LongRestartTimes", LongRestartTimes)
   CurrentTime := GetCurrentTime()
   If (InStr(LongRestartTimes, CurrentTime)) {
     return 1

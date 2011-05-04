@@ -13,12 +13,14 @@ DebugMode() {
 }
 
 Debug(var, val) {
-  Global Debug
-  If (Debug[var]) {
-    LV_Modify(Debug[var], "", var, val)
+  If (DebugMode()) {
+    Global Debug
+    If (Debug[var]) {
+      LV_Modify(Debug[var], "", var, val)
+    }
+    else {
+      Debug.Insert(var, LV_Add("", var, val))
+    }
+    LV_ModifyCol()  
   }
-  else {
-    Debug.Insert(var, LV_Add("", var, val))
-  }
-  LV_ModifyCol()  
 }
