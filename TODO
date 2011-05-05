@@ -9,11 +9,13 @@ Resizeable GUI
 Extra restart messages?
 Customizable restart messages
 Full, archived, backups of server (plugins and all)
-Add ability to restart based on memory limits
+Ability to restart based on memory limits
 Warnings when the server could be lagging
 Special GUI op only commands, such as restarting, restart + backup, and timed restarting (suggestions?)
 Possibly have cooperability with something like MccRestart
 Detect 7za exit codes
 Delete backups after x amount of time or x amount of backups
-Add compatibility with MCSoD
+Compatibility with MCSoD
 Rewrite the auto-restart functionality so that it will restart when the timer counts down to 0 and instead give the warning messages before that point
+Ability to run backups while server is running
+Redo the method for saving config options

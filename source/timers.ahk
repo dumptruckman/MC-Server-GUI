@@ -50,7 +50,7 @@ ServerStopTimer:
     GuiControl,, ServerStatus, DOWN
     AddText("[GUI] Server Stopped`n")
     If (WhatTerminated = "AUTO") {
-      If (AutomatemateBackups) {
+      If (AutomateBackups) {
         Backup()
       }
       else {
