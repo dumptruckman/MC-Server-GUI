@@ -2,33 +2,14 @@ MainTimer:
   MainProcess()
 return
 
-ServerRunningTimer:
-  ProcessLog()
-return
-
 
 DebugModeTimer:
-  If (DebugMode()) {
-    Debug("Server PID", ServerWindowPID)
-    Debug("Server Window ID", ServerWindowID)
-  }
+  Debug("Server PID", ServerWindowPID)
+  Debug("Server Window ID", ServerWindowID)
+  Debug("WhatTerminated", WhatTerminated)
+  Debug("RestartCountdown", RestartCountdown)
 return
 
-
-/*
-RestartAtScheduler:
-  If (CheckForRestarts())
-  {
-    WhatTerminated := "AUTO"
-    InitiateAutomaticRestart()
-  }
-return
-*/
-
-
-;ServerUpTimer:
-  ;ServerUpTime := ServerUpTime + 1
-;return
 
 
 GetCharKeyPress:
@@ -81,6 +62,7 @@ ServerStopTimer:
       AddText("[GUI] Backups skipped when manually stopping the server.`n")
     }
     AddText("[GUI] Finished`n")
+    GuiControl, , ServerStartProcess, Server stopped!
   }
   StopTimeout := StopTimeout + 1
   If (StopTimeout = 60) {
@@ -91,9 +73,7 @@ return
 
 WaitForRestartTimer:
   SetTimer, WaitForRestartTimer, 1000
-  If (DebugMode()) {
-    Debug("WaitForRestartTimer", "1000")
-  }
+  Debug("WaitForRestartTimer", "1000")
   If (!ServerIsRunning()) {
     If (IsBackingUp = 0) {
       SetTimer, WaitForRestartTimer, Off
@@ -115,19 +95,20 @@ return
 
 
 AutomaticRestartTimer:
+  SetTimer, AutomaticRestartTimer, 1000
+  Debug("AutomaticRestartTimer", "1000")
   If ((WarningTimesIndex > WarningTimesArray.MaxIndex()) or (WarningTimesArray[WarningTimesIndex] = "")) {
     If (RestartCountDown = 0) {
       AutomaticRestart()
       SetTimer, AutomaticRestartTimer, Off
-      If (DebugMode()) {
-        Debug("AutomaticRestartTimer", "Off")
-      }
+      Debug("AutomaticRestartTimer", "Off")
       return
     }
     RestartCountDown := RestartCountDown - 1
     return
   }
 
+  Debug("WarningTimesArray[WarningTimesIndex]", WarningTimesArray[WarningTimesIndex])
   If (WarningTimesArray[WarningTimesIndex] = RestartCountDown) {
     WarningMessage := "say Automatic restart in " . RestartTime := ConvertSecondstoMinSec(RestartCountDown) . "."
     SendServer(WarningMessage)

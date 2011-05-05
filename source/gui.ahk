@@ -48,10 +48,14 @@ Gui, Add, Button, ys w87 gBackupSave vBackupSave, Manual Backup
 BackupSave_TT := "Pressing this will backup the world folders specified in GUI Config"
 ;Gui, Add, Button, ys  gSaveWorlds vSaveWorlds, Save Worlds
 ;SaveWorlds_TT := "This is the same as typing save-all"
-Gui, Add, Button, xs Section gWarnRestart vWarnRestart, Warn Restart
-WarnRestart_TT := "This will give warnings to the players at the intervals specified in the config before restarting"
-Gui, Add, Button, ys w100 gImmediateRestart vImmediateRestart, Immediate Restart
+;Gui, Add, Button, xs Section gWarnRestart vWarnRestart, Warn Restart
+;WarnRestart_TT := "This will give warnings to the players at the intervals specified in the config before restarting"
+Gui, Add, Button, xs w60 Section gWarnStop vWarnStop, Warn Stop
+WarnStop_TT := "This will give warnings to the players at the intervals specified in the config before stopping"
+Gui, Add, Button, ys w55 gImmediateRestart vImmediateRestart, Restart
 ImmediateRestart_TT := "This will restart the server without warning the players"
+Gui, Add, Button, ys w55 gReloadButton vReloadButton, Reload
+ReloadButton_TT := "Sends a reload command to the server"
 ;Gui, Add, Button, ys gStopServer vStopServer, Stop Server
 ;StopServer_TT := "This will stop the server immediately"
 GuiControlGet, GUIPos, Pos, ServerControlBox
@@ -62,9 +66,12 @@ GuiControl, Disable, JavaToggle ;Disable toggle at startup
 ;GuiControl, Disable, SaveWorlds
 GuiControl, Disable, WarnRestart
 GuiControl, Disable, ImmediateRestart
+GuiControl, Disable, WarnStop
+GuiControl, Disable, ReloadButton
 ;GuiControl, Disable, StopServer
 
 ;Server Info
+Gui, Margin, 5, 2
 GuiControlGet, GUIPos, Pos, ServerControlBox
 GUIPosX := GUIPosX + GUIPosW + 5
 Gui, Add, GroupBox, y%GUIPosY% x%GUIPosX% w200 h%GUIPosH% vServerInfoBox, Server Information
@@ -88,7 +95,10 @@ Gui, Add, Text, yp+15 xp+10 Section, Version %VersionNumber%
 Gui, Add, Text, xs w110 vGUIMemUse, Memory Usage: NA
 ;CPU Load indicator
 Gui, Add, Text, xs w110 vGUICPUUse, CPU Load: NA
+;Server start process
+Gui, Add, Text, xs w110 vServerStartProcess, 
 
+Gui, Margin, 5, 5
 ;Network Info
 GuiControlGet, GUIPos, Pos, GUIInfoBox
 GUIPosX := GUIPosX + GUIPosW + 5

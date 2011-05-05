@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".6.4"
+VersionNumber := ".6.5"
 
 ;Include Libraries
 #Include lib\RichEdit.ahk
@@ -49,6 +49,7 @@ If (DebugMode) {
 ;SHOW DAS GUI
 ;Gui, +Resize +MinSize
 Gui, Show, Restore, %WindowTitle%
+Menu, Tray, NoIcon
 
 
 
@@ -110,10 +111,10 @@ MainProcess() {
     Global ServerStarted
     
     ControlSwitcher("ON")
-    ;GetLog()
-    If (ServerStarted) {
-      SetTimer, ServerRunningTimer, On
-    }
+
+    ;SetTimer, ServerRunningTimer, On
+    ProcessLog()
+
     CommitSize := GetProcessMemory_CommitSize(ServerWindowPID, "M")
     WorkingSet := GetProcessMemory_WorkingSet(ServerWindowPID, "M")
     GuiControl,, ServerMemUse, Memory Usage: %WorkingSet% M / %CommitSize% M
@@ -121,6 +122,7 @@ MainProcess() {
     GuiControl,, ServerCPUUse, CPU Load: %CPULoad%`%
     
     If ((CheckForRestarts()) and (!IsAutomated)) {
+      Global WhatTerminated
       WhatTerminated := "AUTO"
       InitiateAutomaticRestart()
     }
@@ -149,7 +151,7 @@ MainProcess() {
       StopServer()
     }
     ControlSwitcher("OFF")
-    SetTimer, ServerRunningTimer, Off
+    ;SetTimer, ServerRunningTimer, Off
     ;SetTimer, ServerUpTimer, Off
   }
   WorkingSet := GetProcessMemory_WorkingSet(GUIPID, "M")

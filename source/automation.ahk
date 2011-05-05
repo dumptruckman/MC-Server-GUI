@@ -209,10 +209,6 @@ InitiateAutomaticRestart() {
     RestartCountDown := WarningTimesArray[1] + 1
     WarningTimesIndex = 1
     
-    SetTimer, AutomaticRestartTimer, 1000
-    If (DebugMode()) {
-      Debug("AutomaticRestartTimer", "1000")
-    }
     GoSub, AutomaticRestartTimer
   }
   else {
@@ -223,12 +219,13 @@ InitiateAutomaticRestart() {
 
 AutomaticRestart() {  
   Global RestartDelay
+  Global WarnStop
   
   SendServer("save-all")
   StopServer()
-  Temp := RestartDelay * 1000
-  SetTimer, WaitForRestartTimer, %Temp%
-  If (DebugMode()) {
+  If (!WarnStop) {
+    Temp := RestartDelay * 1000
+    SetTimer, WaitForRestartTimer, %Temp%
     Debug("WaitForRestartTimer", Temp)
   }
 }

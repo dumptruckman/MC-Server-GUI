@@ -57,9 +57,7 @@ StartServer() {
   Global MCServerJar
   Global MCServerPath
   
-  If (DebugMode()) {
-    Debug("Server Start Process", "ServerStart()")
-  }
+  Debug("Server Start Process", "ServerStart()")
   
   If ((MCServerJar = "Set this") or (MCServerJar = "")) {            ;If not config'd
     ReplaceText("[GUI] Please take a look at the Server Configuration...  You must specify the MC Server Jar file.")
@@ -90,14 +88,11 @@ StartServer() {
   ;Grab some globals
   Global ServerWindowPID
   Global ServerWindowID
-  ;Global UpdateRate
   Global AlwaysShowJavaConsole
 
   SetWorkingDir, %MCServerPath%
   
-  If (DebugMode()) {
-    Debug("Server Start Process", "Checking log size")
-  }
+  Debug("Server Start Process", "Checking log size")
   
   ;If the log is really large, give the user a chance to clean it up.
   FileGetSize, LogFileSize, server.log, K
@@ -116,23 +111,19 @@ StartServer() {
     IsBackingUp = 0
   }
   
-  If (DebugMode()) {
-    Debug("Server Start Process", "Initializing Vars")
-  }
+  Debug("Server Start Process", "Initializing Vars")
   
   InitializeVariables()                     ;Get variables ready for start
   Global ServerStarted
   
-  If (DebugMode()) {
-    Debug("Server Start Process", "Building Run Line")
-  }
+  Debug("Server Start Process", "Building Run Line")
   RunLine := BuildRunLine()
   
-  If (DebugMode()) {
-    Debug("Server Start Process", "Starting java")
-  }
+  Debug("Server Start Process", "Starting java")
+  ReplaceText()                           ;Blanks the console output box
   ;Attempt to start Java for the server
-  ReplaceText("[GUI] Starting Java...")
+  ;ReplaceText("[GUI] Starting Java...")
+  GuiControl, , ServerStartProcess, Starting java
   If (AlwaysShowJavaConsole) {
     Run, %RunLine%, %MCServerPath%, Min UseErrorlevel, ServerWindowPID
   }
@@ -141,6 +132,7 @@ StartServer() {
   }
   If (ErrorLevel) {                          ;If there was a problem launching it initially, error out
     ServerStarted = 1
+    GuiControl, , ServerStartProcess, Error!
     WriteErrorLog("Error starting server.  Windows system error code: " . A_LastError)
     MsgBox, 5, Server Start Error, Error starting the server.  Windows system error code: %A_LastError%.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
     IfMsgBox, Retry                         ;Give user option to retry
@@ -149,13 +141,12 @@ StartServer() {
     }
     return 0
   }
-  If (DebugMode()) {
-    Debug("Server Start Process", "Java launched, waiting for PID")
-  }
+  Debug("Server Start Process", "Java launched, waiting for PID")
   Process, Wait, %ServerWindowPID%, 5         ;Waits on the process to be ready
   If (ErrorLevel = 0) {                        ;If it times out waiting or the process doesn't exist, error out
     ServerStarted = 1
-    AddText("Error.")
+    GuiControl, , ServerStartProcess, Error!
+    ;AddText("Error.")
     WriteErrorLog("Error starting server.  Problem starting Java.")
     MsgBox, 5, Server Start Error, Error starting the server.  Java did not run or there was a problem starting it.  Check your configuration.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
     IfMsgBox, Retry                         ;Give user option to retry
@@ -167,13 +158,13 @@ StartServer() {
   
   GuiControl, Disable, ServerProperties       ;Server has started, so disable editing of server.properties
   ;Waits for the console window to exist
-  If (DebugMode()) {
-    Debug("Server Start Process", "PID foud, waiting for console window")
-  }
-  ReplaceText("[GUI] Waiting to hook console window...")
+  Debug("Server Start Process", "PID foud, waiting for console window")
+  ;ReplaceText("[GUI] Waiting to hook console window...")
+  GuiControl, , ServerStartProcess, Hooking console
   WinWait, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass, , 5
   If (ErrorLevel) {                            ;Waits 5 seconds for the window to exist and, if it doesn't or there was some other error, errors out
     ServerStarted = 1
+    GuiControl, , ServerStartProcess, Error!
     Loop                                      ;This loops ensures that it closes the Java process semi-gracefully
     {
       Process, Exist, %ServerWindowPID%
@@ -185,7 +176,7 @@ StartServer() {
       }
     }
     GuiControl, Enable, ServerProperties      ;Re-enables the server.properties edit since it didn't start properly
-    AddText("Error.")
+    ;AddText("Error.")
     WriteErrorLog("Error starting server.  Could not hook Java console window.")
     MsgBox, 5, Server Start Error, Error starting the server.  Could not hook Java console window.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
     IfMsgBox, Retry
@@ -194,13 +185,12 @@ StartServer() {
     }
     return 0
   }
-  If (DebugMode()) {
-    Debug("Server Start Process", "Hooking console window")
-  }
+  Debug("Server Start Process", "Hooking console window")
   ;Since the windows supposedly exists, attempts to hook onto it
   WinGet, ServerWindowID, ID, ahk_pid %ServerWindowPID% ahk_class ConsoleWindowClass
   If (ServerWindowID = 0) {                 ;If, for some reason, it doesn't hook the window, errors out
     ServerStarted = 1
+    GuiControl, , ServerStartProcess, Error!
     Loop                                    ;This loops ensures that it closes the Java process semi-gracefully
     {
       Process, Exist, %ServerWindowPID%
@@ -212,7 +202,7 @@ StartServer() {
       }
     }
     GuiControl, Enable, ServerProperties      ;Re-enables the server.properties edit since it didn't start properly
-    AddText("Error.")
+    ;AddText("Error.")
     WriteErrorLog("Error starting server.  Could not hook Java console window.")
     MsgBox, 5, Server Start Error, Error starting the server.  Could not hook Java console window.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5
     IfMsgBox, Retry
@@ -221,9 +211,7 @@ StartServer() {
     }
     return 0
   }
-  If (DebugMode()) {
-    Debug("Server Start Process", "Parsing restart times")
-  }
+  Debug("Server Start Process", "Parsing restart times")
   ;If it made it this far, it should be good!
   
   Global LongRestartTimes
@@ -232,38 +220,17 @@ StartServer() {
   SetServerStartTime()
   LongRestartTimes := ParseRestartTimes(RestartTimes)
   SoonestRestart := GetSoonestRestart()
-  ;SetTimer, RestartAtScheduler, 1000
-  If (DebugMode()) {
-    Debug("Server Start Process", "Starting server timer")
-  }
-  Global ServerUpTime
-  ;ServerUpTime = 0
-  ;SetTimer, ServerUpTimer, 500
-  ;If (DebugMode()) {
-  ;  Debug("ServerUpTimer", 500)
-  ;}
-  
+  GuiControl, , ServerStartProcess, Server started!
+
   Global ServerState
-  
-  If (DebugMode()) {
-    Debug("Server Start Process", "Blanking console")
-  }
-  ReplaceText()                           ;Blanks the console output box
   ServerState := "ON"                     ;Stores the state of the server as ON
   
-  If (DebugMode()) {
-    Debug("Server Start Process", "Switching controls")
-  }
+  Debug("Server Start Process", "Switching controls")
   ControlSwitcher("ON")                   ;Switches all the buttons
   
-  If (DebugMode()) {
-    Debug("Server Start Process", "Starting log update timer")
-  }
   ServerStarted = 1
-  SetTimer, ServerRunningTimer, 250
-  If (DebugMode()) {
-    Debug("Server Start Process", "Complete!")
-  }
+  ;SetTimer, ServerRunningTimer, 250
+  Debug("Server Start Process", "Complete!")
   return 1
 }
 
@@ -274,6 +241,7 @@ StopServer() {
   Global WhatTerminated
   
   SendServer("stop")
+  GuiControl, , ServerStartProcess, Stopping server
   ServerState = "OFF"
   If (WhatTerminated = "ERROR") {
     WriteErrorLog("Server error.  Java terminated unexpectedly.")

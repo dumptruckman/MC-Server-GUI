@@ -15,6 +15,7 @@ InitializeVariables() {
   SoonestRestart = 0
   IsAutomated = 0
   ServerStarted = 0
+  WarnStop = 0
   
   ;Set the file pointer at the end of the log file
   FileGetSize, LastLogSize, %MCServerPath%\server.log

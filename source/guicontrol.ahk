@@ -16,9 +16,11 @@ ControlSwitcher(ServerState) {
     GuiControl, , BackupSave, Save Worlds
     BackupSave_TT := "Pressing run the save-all command on your server"
     GuiControl, Enable, SaveWorlds
-    GuiControl, Enable, WarnRestart
+    ;GuiControl, Enable, WarnRestart
+    GuiControl, Enable, WarnStop
     GuiControl, Enable, ImmediateRestart
     GuiControl, Enable, StopServer
+    GuiControl, Enable, Reloadbutton
     GuiControl, Enable, ConsoleInput
     GuiControl, Enable, Submit
     GuiControl, Disable, MCServerJar
@@ -56,7 +58,9 @@ ControlSwitcher(ServerState) {
     GuiControl, , BackupSave, Manual Backup
     BackupSave_TT := "Pressing this will backup the world folders specified in GUI Config"
     GuiControl, Disable, SaveWorlds
-    GuiControl, Disable, WarnRestart
+    ;GuiControl, Disable, WarnRestart
+    GuiControl, Disable, WarnStop
+    GuiControl, Disable, Reloadbutton
     GuiControl, Disable, ImmediateRestart
     GuiControl, Disable, StopServer
     GuiControl, Disable, ConsoleInput
@@ -195,10 +199,12 @@ GUIUpdate() {
     
     GuiControlGet, RestartTimes,, RestartTimes
     SetConfigKey("Timing", "RestartTimes", RestartTimes)
-    If (ServerIsRunning()) {
-      LongRestartTimes := ParseRestartTimes(RestartTimes)
+    If (!IsAutomated) {
+      If (ServerIsRunning()) {
+        LongRestartTimes := ParseRestartTimes(RestartTimes)
+      }
+      SoonestRestart := GetSoonestRestart()
     }
-    SoonestRestart := GetSoonestRestart()
     
     GuiControlGet, WarningTimes,, WarningTimes
     SetConfigKey("Timing", "WarningTimes", WarningTimes)
@@ -448,8 +454,17 @@ SaveWorlds:
 return
 */
 
+/*
 WarnRestart:
   WhatTerminated := "USER"
+  InitiateAutomaticRestart()
+return
+*/
+
+
+WarnStop:
+  WhatTerminated := "USER"
+  WarnStop = 1
   InitiateAutomaticRestart()
 return
 
@@ -458,6 +473,12 @@ ImmediateRestart:
   WhatTerminated := "USER"
   AutomaticRestart()
 return
+
+
+ReloadButton:
+  SendServer("reload")
+Return
+
 
 /*
 StopServer:
@@ -580,16 +601,24 @@ return
 
 
 GuiSize:
+  /*
    GuiWidth:=A_GuiWidth
    GuiHeight:=A_GuiHeight
    WinGetPos, GuiX, GuiY, , , %WindowTitle%, , ,
    If (GuiWidth = 0) && If (GuiHeight = 0) && If (GuiX = -32000) && If (GuiY = -32000)
       Gui, Hide
+  */
+  If ( A_EventInfo = 1 ) ; Minimise
+  {
+    Menu, Tray, Icon
+    Gui, 1: Show, Hide
+  }
 Return
 
 
 Restore:
-   Gui, Show
+  Menu, Tray, NoIcon
+  Gui, Show
 Return
 
 
