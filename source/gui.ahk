@@ -222,6 +222,9 @@ GuiControl,, ServerStartOnStartup, %ServerStartOnStartup%
 ;Option to always show java console
 Gui, Add, CheckBox, xs vAlwaysShowJavaConsole, Always show Java console (Starts minimized)
 GuiControl,, AlwaysShowJavaConsole, %AlwaysShowJavaConsole%
+;Option to minimize to tray
+Gui, Add, CheckBox, xs vMinimizeToTray, Minimize GUI to System Tray
+GuiControl,, AlwaysMinimizeToTray, %MinimizeToTray%
 
 /* Not yet ready
 ;NickNames

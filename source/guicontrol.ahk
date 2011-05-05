@@ -159,6 +159,9 @@ GUIUpdate() {
     
     AlwaysShowJavaConsole := GetConfigKey("Other", "AlwaysShowJavaConsole")
     GuiControl,, AlwaysShowJavaConsole, %AlwaysShowJavaConsole%
+    
+    MinimizeToTray := GetConfigKey("Other", "MinimizeToTray")
+    GuiControl,, MinimizeToTray, %MinimizeToTray%
   }
   if (ThisTab != "GUI Config") {
     GuiControlGet, MCBackupPath,, MCBackupPath
@@ -243,6 +246,9 @@ GUIUpdate() {
     
     GuiControlGet, AlwaysShowJavaConsole,, AlwaysShowJavaConsole
     SetConfigKey("Other", "AlwaysShowJavaConsole", AlwaysShowJavaConsole)
+    
+    GuiControlGet, MinimizeToTray,, MinimizeToTray
+    SetConfigKey("Other", "MinimizeToTray", MinimizeToTray)
   }
   
   If (ThisTab = "Server Config") {
@@ -336,7 +342,7 @@ AddText(Text, ByRef Color = "") {
   VarSetCapacity(GuiThreadInfo, GuiThreadInfoSize)
   NumPut(GuiThreadInfoSize, GuiThreadInfo, 0)
   if not DllCall("GetGUIThreadInfo", uint, 0, str, GuiThreadInfo) {
-      MsgBox GetGUIThreadInfo() indicated a failure.
+      ;MsgBox GetGUIThreadInfo() indicated a failure.
       return
   }
   FocusedHWND := NumGet(GuiThreadInfo, 12)  ; Retrieve the hwndFocus field from the struct.
@@ -604,10 +610,12 @@ GuiSize:
    If (GuiWidth = 0) && If (GuiHeight = 0) && If (GuiX = -32000) && If (GuiY = -32000)
       Gui, Hide
   */
-  If ( A_EventInfo = 1 ) ; Minimise
-  {
-    Menu, Tray, Icon
-    Gui, 1: Show, Hide
+  If (MinimizeToTray) {
+    If ( A_EventInfo = 1 ) ; Minimise
+    {
+      Menu, Tray, Icon
+      Gui, 1: Show, Hide
+    }
   }
 Return
 

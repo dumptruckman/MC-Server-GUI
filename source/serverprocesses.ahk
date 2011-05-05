@@ -242,7 +242,7 @@ StopServer() {
   
   SendServer("stop")
   GuiControl, , ServerStartProcess, Stopping server
-  ServerState = "OFF"
+  ServerState := "OFF"
   If (WhatTerminated = "ERROR") {
     WriteErrorLog("Server error.  Java terminated unexpectedly.")
     MsgBox, 0, Server Error, Java terminated unexpectedly.  Check your configuration.  This has been logged in guierror.log`n`r`n`rThis window will close in 5 seconds, 5

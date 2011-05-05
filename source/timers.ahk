@@ -8,6 +8,7 @@ DebugModeTimer:
   ;Debug("Server Window ID", ServerWindowID)
   ;Debug("WhatTerminated", WhatTerminated)
   ;Debug("RestartCountdown", RestartCountdown)
+  Debug("ServerState", ServerState)
 return
 
 

@@ -70,6 +70,7 @@ InitializeConfig() {
   WorldBackups := GetConfigKey("Backups", "WorldBackups", "1")
   LogBackups := GetConfigKey("Backups", "LogBackups", "1")
   ZipBackups := GetConfigKey("Backups", "ZipBackups", "1")
+  MinimizeToTray := GetConfigKey("Other", "MinimizeToTray", "1")
   WorldList := ReadWorlds()
   If (WorldList = "ERROR") {
     WriteWorlds("world")

@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".6.6-dev"
+VersionNumber := ".6.6"
 
 ;Include Libraries
 #Include lib\RichEdit.ahk
@@ -62,6 +62,7 @@ OnMessage(0x200, "WM_MOUSEMOVE")
 SetTimer, MainTimer, 250
 SetTimer, NetworkMonitor, 1000
 SetTimer, GetCharKeyPress, 100
+OnExit, GuiClose
 If (DebugMode()) {
   Debug := Object()
   ;Debug("MainTimer", "250")
@@ -133,7 +134,7 @@ MainProcess() {
       VarSetCapacity(GuiThreadInfo, GuiThreadInfoSize)
       NumPut(GuiThreadInfoSize, GuiThreadInfo, 0)
       if not DllCall("GetGUIThreadInfo", uint, 0, str, GuiThreadInfo) {
-          MsgBox GetGUIThreadInfo() indicated a failure.
+          ;MsgBox GetGUIThreadInfo() indicated a failure.
           return
       }
       FocusedHWND := NumGet(GuiThreadInfo, 12)  ; Retrieve the hwndFocus field from the struct.
