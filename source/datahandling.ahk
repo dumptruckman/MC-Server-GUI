@@ -17,15 +17,18 @@ InitializeVariables() {
   ServerStarted = 0
   WarnStop = 0
   
+  If (DebugMode())
+  {
+    LogCheck = 0
+  }
+  
   ;Set the file pointer at the end of the log file
   FileGetSize, LastLogSize, %MCServerPath%\server.log
   LogFile := FileOpen(MCServerPath . "\server.log", "a")
   LogFilePointer := LogFile.Tell()
   PreviousLogFilePointer := 0
   LogFile.Close()
-  If (DebugMode()) {
-    Debug("LogFilePointer", LogFilePointer)
-  }
+  Debug("LogFilePointer", LogFilePointer)
   
   ;Initialize/Clear PlayerList array
   PlayerList := Object()
@@ -321,19 +324,27 @@ GetTimeDifference(ToTime, FromTime) {
 ProcessLog() {
   Global MCServerPath
   Global LastLogSize
-
+  
+  If (DebugMode())
+  {
+    Global LogCheck
+    LogCheck := LogCheck + 1
+    Debug("CheckLogChanges()", LogCheck)
+  }
   TempDir = %A_WorkingDir%
   SetWorkingDir, %MCServerPath%
   
+  FileGetVersion, trash, server.log       ;This is necessary to "refresh" the log file
   ;Reads the log file size and compares it to the last checked size... (Detects log changes and updates GUI)
   FileGetSize, NewLogSize, server.log
-  FileGetVersion, trash, server.log       ;This is necessary to "refresh" the log file
+  Debug("LogSize Difference", (NewLogSize - LastLogSize))
   
   if (NewLogSize != LastLogSize) {        ;Changes found
     GetLog()                        
     LastLogSize := NewLogSize             ;Updates last checked filesize
   }
   SetWorkingDir, %TempDir%
+  ;Debug("CheckLogChanges()", "")
 }
 
 
@@ -342,7 +353,7 @@ GetLog() {
   Global MCServerPath
   Global LogFilePointer
   Global PreviousLogLine
-  
+  Debug("GetLog()", "Getting")
   TempDir = %A_WorkingDir%
   SetWorkingDir, %MCServerPath%
   
@@ -359,6 +370,8 @@ GetLog() {
     PreviousLogLine := Line
   }
   LogFile.Close()
+  Debug("GetLog()", "")
+  Debug("LogFilePointer", LogFilePointer)
   SetWorkingDir, %TempDir%
 }
 

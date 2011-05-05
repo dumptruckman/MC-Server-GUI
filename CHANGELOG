@@ -1,3 +1,6 @@
+Version .6.6-dev
+  Added some very specific debug mode values to fight this zero-console output issue
+
 Version .6.5
   Added a new text box to show the phases of the start up process (instead of displaying in the console output), allowing for:
   Modified the startup process.  It will now start displaying console output much sooner

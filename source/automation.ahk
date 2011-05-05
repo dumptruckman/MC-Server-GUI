@@ -187,7 +187,7 @@ BackupLog(backupfolder) {
 
 CheckForRestarts() {
   Global LongRestartTimes
-  Debug("LongRestartTimes", LongRestartTimes)
+  ;Debug("LongRestartTimes", LongRestartTimes)
   CurrentTime := GetCurrentTime()
   If (InStr(LongRestartTimes, CurrentTime)) {
     return 1
@@ -226,6 +226,6 @@ AutomaticRestart() {
   If (!WarnStop) {
     Temp := RestartDelay * 1000
     SetTimer, WaitForRestartTimer, %Temp%
-    Debug("WaitForRestartTimer", Temp)
+    ;Debug("WaitForRestartTimer", Temp)
   }
 }

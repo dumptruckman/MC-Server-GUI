@@ -4,10 +4,10 @@ return
 
 
 DebugModeTimer:
-  Debug("Server PID", ServerWindowPID)
-  Debug("Server Window ID", ServerWindowID)
-  Debug("WhatTerminated", WhatTerminated)
-  Debug("RestartCountdown", RestartCountdown)
+  ;Debug("Server PID", ServerWindowPID)
+  ;Debug("Server Window ID", ServerWindowID)
+  ;Debug("WhatTerminated", WhatTerminated)
+  ;Debug("RestartCountdown", RestartCountdown)
 return
 
 
@@ -39,11 +39,9 @@ ServerStopTimer:
     SetTimer, ServerStopTimer, Off
     ;SetTimer, ServerRunningTimer, Off
     ;SetTimer, ServerUpTimer, Off
-    If (DebugMode()) {
-      Debug("ServerStopTimer", "Off")
-      ;Debug("ServerRunningTimer", "Off")
-      ;Debug("ServerUpTimer", "Off")
-    }
+    ;Debug("ServerStopTimer", "Off")
+    ;Debug("ServerRunningTimer", "Off")
+    ;Debug("ServerUpTimer", "Off")
     ;SetTimer, RestartAtScheduler, Off
     ServerWindowPID = 0
     ServerWindowID = 0
@@ -73,13 +71,11 @@ return
 
 WaitForRestartTimer:
   SetTimer, WaitForRestartTimer, 1000
-  Debug("WaitForRestartTimer", "1000")
+  ;Debug("WaitForRestartTimer", "1000")
   If (!ServerIsRunning()) {
     If (IsBackingUp = 0) {
       SetTimer, WaitForRestartTimer, Off
-      If (DebugMode()) {
-        Debug("WaitForRestartTimer", "Off")
-      }
+      ;Debug("WaitForRestartTimer", "Off")
       Loop
       {
         If (StartServer()) {
@@ -96,12 +92,12 @@ return
 
 AutomaticRestartTimer:
   SetTimer, AutomaticRestartTimer, 1000
-  Debug("AutomaticRestartTimer", "1000")
+  ;Debug("AutomaticRestartTimer", "1000")
   If ((WarningTimesIndex > WarningTimesArray.MaxIndex()) or (WarningTimesArray[WarningTimesIndex] = "")) {
     If (RestartCountDown = 0) {
       AutomaticRestart()
       SetTimer, AutomaticRestartTimer, Off
-      Debug("AutomaticRestartTimer", "Off")
+      ;Debug("AutomaticRestartTimer", "Off")
       return
     }
     RestartCountDown := RestartCountDown - 1

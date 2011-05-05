@@ -75,9 +75,7 @@ ControlSwitcher(ServerState) {
     GuiControl,, ServerStatus, DOWN
     Menu, Tray, Tip, Server DOWN
     SetTimer, AutomaticRestartTimer, Off
-    If (DebugMode()) {
-      Debug("AutomaticRestartTimer", "Off")
-    }
+    ;Debug("AutomaticRestartTimer", "Off")
   }
 }
 
@@ -424,9 +422,7 @@ StartStopServer:
   GuiControlGet, StartStopServer, , StartStopServer
   If (StartStopServer = "Start Server") {
     SetTimer, WaitForRestartTimer, Off
-    If (DebugMode()) {
-      Debug("WaitForRestartTimer", "Off")
-    }
+    ;Debug("WaitForRestartTimer", "Off")
     StartServer()
   } 
   else {
