@@ -24,8 +24,8 @@ InitializeVariables() {
   
   ;Set the file pointer at the end of the log file
   FileGetSize, LastLogSize, %MCServerPath%\server.log
-  LogFile := FileOpen(MCServerPath . "\server.log", "a")
-  LogFilePointer := LogFile.Tell()
+  LogFile := FileOpen(MCServerPath . "\server.log", "r")
+  LogFilePointer := LogFile.Length
   PreviousLogFilePointer := 0
   LogFile.Close()
   Debug("LogFilePointer", LogFilePointer)
@@ -324,7 +324,8 @@ GetTimeDifference(ToTime, FromTime) {
 
 ProcessLog() {
   Global MCServerPath
-  Global LastLogSize
+  ;Global LastLogSize
+  Global LogFilePointer
   
   If (DebugMode())
   {
@@ -335,17 +336,27 @@ ProcessLog() {
   TempDir = %A_WorkingDir%
   SetWorkingDir, %MCServerPath%
   
-  FileGetVersion, trash, server.log       ;This is necessary to "refresh" the log file
-  ;Reads the log file size and compares it to the last checked size... (Detects log changes and updates GUI)
-  FileGetSize, NewLogSize, server.log
-  Debug("LogSize Difference", (NewLogSize - LastLogSize))
-  
-  if (NewLogSize != LastLogSize) {        ;Changes found
-    GetLog()                        
-    LastLogSize := NewLogSize             ;Updates last checked filesize
+  LogFile.FileOpen("server.log", "r")
+  If(LogFile = 0) {
+    AddText("[GUI] Problem reading server.log.  Error code " . A_LastError . "`n")
+    WriteErrorLog("Problem reading server.log.  Error code " . A_LastError)
   }
+  else {
+    NewLogSize := LogFile.Length
+  }
+  LogFile.Close()
+  ;FileGetVersion, trash, server.log       ;This is necessary to "refresh" the log file
+  ;Reads the log file size and compares it to the last checked size... (Detects log changes and updates GUI)
+  ;FileGetSize, NewLogSize, server.log
+  ;Debug("LogSize Difference", (NewLogSize - LastLogSize))
+  
+  if (NewLogSize != LogFilePointer) {
+  ;if (NewLogSize != LastLogSize) {        ;Changes found
+    GetLog()                        
+    ;LastLogSize := NewLogSize             ;Updates last checked filesize
+  }
+  
   SetWorkingDir, %TempDir%
-  ;Debug("CheckLogChanges()", "")
 }
 
 
@@ -354,23 +365,42 @@ GetLog() {
   Global MCServerPath
   Global LogFilePointer
   Global PreviousLogLine
-  Debug("GetLog()", "Getting")
+
   TempDir = %A_WorkingDir%
   SetWorkingDir, %MCServerPath%
   
   LogFile := FileOpen("server.log", "r")
-  LogFile.Seek(LogFilePointer)
-  loop                                    ;Loops through log file line by line after last left off position
-  {
-    If (LogFile.AtEOF) {
-      LogFilePointer := LogFile.Tell()
-      break
-    }
-    Line := LogFile.ReadLine()
-    ParseLogIntake(Line)
-    PreviousLogLine := Line
+  If(LogFile = 0) {
+    AddText("[GUI] Problem reading server.log.  Error code " . A_LastError . "`n")
+    WriteErrorLog("Problem reading server.log.  Error code " . A_LastError)
   }
-  LogFile.Close()
+  else {
+    LogFile.Seek(LogFilePointer)
+    /*
+    loop                                    ;Loops through log file line by line after last left off position
+    {
+      If (LogFile.AtEOF) {
+        LogFilePointer := LogFile.Tell()
+        break
+      }
+      Line := LogFile.ReadLine()
+      ParseLogIntake(Line)
+      PreviousLogLine := Line
+    }
+    */
+    LogData := LogFile.Read()
+    LogFilePointer := LogFile.Tell()
+    LogFile.Close()
+    
+    Loop, Parse, LogData, `n, `r
+    {
+      Line := A_LoopField
+      If (Line != "") {
+        ParseLogIntake(Line . "`n")
+        PreviousLogLine := Line
+      }
+    }
+  }
   Debug("GetLog()", "")
   Debug("LogFilePointer", LogFilePointer)
   SetWorkingDir, %TempDir%

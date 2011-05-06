@@ -1,3 +1,7 @@
+Version .6.8
+  Rewrote how the GUI processes server.log, hopefuly making it more reliable and use less resources
+  Added error checking to this process so that if there's any issues reading it, it will tell you
+  
 Version .6.7
   Automatic backups now work again!
 
