@@ -1,3 +1,6 @@
+Version .6.9-dev
+  Alt-Tab works more reliably while looking at the GUI
+
 Version .6.8
   Rewrote how the GUI processes server.log, hopefuly making it more reliable and use less resources
   Added error checking to this process so that if there's any issues reading it, it will tell you

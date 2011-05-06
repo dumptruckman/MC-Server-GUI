@@ -8,7 +8,8 @@ DebugModeTimer:
   ;Debug("Server Window ID", ServerWindowID)
   ;Debug("WhatTerminated", WhatTerminated)
   ;Debug("RestartCountdown", RestartCountdown)
-  Debug("ServerState", ServerState)
+  ;Debug("ServerState", ServerState)
+  Debug("A_LastError", A_LastError)
 return
 
 
@@ -19,12 +20,21 @@ GetCharKeyPress:
     GuiControlGet, InputEnabled, Enabled, ConsoleInput
     If (InputEnabled) {
       GuiControlGet, FocusedControl, Focus
-      GuiControlGet, ThisTab,, ThisTab
-      If (FocusedControl != "Edit1" and ThisTab = "Main Window") {
-        Input, KeyPressed, I L1 T.1
+      GuiControlGet, ThisTab,, ThisTab 
+      If ((FocusedControl != "Edit1") and (ThisTab = "Main Window") and (!GetKeyState("Alt", "P"))) {
+        Input, KeyPressed, I T.1 M, {LAlt}{RAlt}
+        If (RegExMatch(ErrorLevel, "^EndKey")) {
+          If (GetKeyState("Tab", "P")) {
+            Send {LAlt Down}{Tab}{LAlt Up}
+          }
+          else {
+            Send, !
+          }
+        }
+        Debug("KeyPressed", KeyPressed)
         If (KeyPressed) {
-          ControlSend, Edit1, %KeyPressed%, A
           GuiControl, focus, ConsoleInput
+          Send, %KeyPressed%
         }
       }
     }

@@ -5,7 +5,7 @@
 *  dumptruckman *
 *****************
 */
-VersionNumber := ".6.8"
+VersionNumber := ".6.9-dev"
 
 ;Include Libraries
 #Include lib\RichEdit.ahk
@@ -114,7 +114,7 @@ MainProcess() {
     ControlSwitcher("ON")
 
     ;SetTimer, ServerRunningTimer, On
-    ProcessLog()
+    CheckForLogChanges()
 
     CommitSize := GetProcessMemory_CommitSize(ServerWindowPID, "M")
     WorkingSet := GetProcessMemory_WorkingSet(ServerWindowPID, "M")

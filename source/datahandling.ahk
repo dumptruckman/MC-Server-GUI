@@ -322,17 +322,11 @@ GetTimeDifference(ToTime, FromTime) {
 
 
 
-ProcessLog() {
+CheckForLogChanges() {
   Global MCServerPath
   ;Global LastLogSize
   Global LogFilePointer
   
-  If (DebugMode())
-  {
-    Global LogCheck
-    LogCheck := LogCheck + 1
-    Debug("CheckLogChanges()", LogCheck)
-  }
   TempDir = %A_WorkingDir%
   SetWorkingDir, %MCServerPath%
   
@@ -345,15 +339,10 @@ ProcessLog() {
     NewLogSize := LogFile.Length
   }
   LogFile.Close()
-  ;FileGetVersion, trash, server.log       ;This is necessary to "refresh" the log file
-  ;Reads the log file size and compares it to the last checked size... (Detects log changes and updates GUI)
-  ;FileGetSize, NewLogSize, server.log
-  ;Debug("LogSize Difference", (NewLogSize - LastLogSize))
+
   
   if (NewLogSize != LogFilePointer) {
-  ;if (NewLogSize != LastLogSize) {        ;Changes found
-    GetLog()                        
-    ;LastLogSize := NewLogSize             ;Updates last checked filesize
+    GetLog()
   }
   
   SetWorkingDir, %TempDir%

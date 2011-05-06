@@ -249,7 +249,6 @@ StopServer() {
   }
   StopTimeout = 0
   SetTimer, ServerStopTimer, 1000
-  ;Debug("ServerStopTimer", "1000")
 }
 
 
