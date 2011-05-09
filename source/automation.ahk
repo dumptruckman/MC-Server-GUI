@@ -27,7 +27,7 @@ Backup() {
   Global IsBackingUp
   Global ZipBackups
   Global MCServerPath
-  Global MCBackupPath
+  Global BackupPath
   
   IsBackingUp = 1
   
@@ -40,7 +40,7 @@ Backup() {
     filetime := substr(foldername, 1, 4) . "-" . substr(foldername, 5, 2) . "-" . substr(foldername, 7, 2) . " " . substr(foldername, 9, 2) . "." . substr(foldername, 11, 2) . "." . substr(foldername, 13, 2)
     
     If (!ZipBackups) {
-      FileCreateDir, %MCBackupPath%\%filetime%
+      FileCreateDir, %BackupPath%\%filetime%
     }
     if (LogBackups = "1") {   ;Runs log backups if suppose to
       BackupLog(filetime)
@@ -74,7 +74,7 @@ Backup() {
 
 BackupWorld(backupfolder, world = "world") {
   Global MCServerPath
-  Global MCBackupPath
+  Global BackupPath
   Global ZipBackups
 
   AddText("[GUI] Backing up " . world . "...")
@@ -83,13 +83,13 @@ BackupWorld(backupfolder, world = "world") {
   If (ZipBackups = "1") {
     AddText("Archiving to " . backupfolder . ".zip...")
     sleep 10
-    filename = %MCBackupPath%\%backupfolder%.zip
-    RunLine = 7za.exe a "%MCBackupPath%\%backupfolder%.zip" "%MCServerPath%\%world%\"
+    filename = %BackupPath%\%backupfolder%.zip
+    RunLine = 7za.exe a "%BackupPath%\%backupfolder%.zip" "%MCServerPath%\%world%\"
     RunWait, %RunLine%, , Hide
   }
   else {
     FileGetSize, OriginalSize, %MCServerPath%\%world%
-    filename = %MCBackupPath%\%backupfolder%\%world%
+    filename = %BackupPath%\%backupfolder%\%world%
     FileCopyDir, %MCServerPath%\%world%, %filename%
     If (ErrorLevel) {
       AddText("Error!`n")
@@ -128,7 +128,7 @@ BackupWorld(backupfolder, world = "world") {
 
 BackupLog(backupfolder) {
   Global MCServerPath
-  Global MCBackupPath
+  Global BackupPath
   Global ConsoleBox
   Global ZipBackups
   
@@ -138,14 +138,14 @@ BackupLog(backupfolder) {
   If (ZipBackups = "1") {
     AddText("Archiving to " . backupfolder . ".zip...")
     sleep 10
-    filename = %MCBackupPath%\%backupfolder%.zip
-    RunLine = 7za.exe a "%MCBackupPath%\%backupfolder%.zip" "%MCServerPath%\server.log"
+    filename = %BackupPath%\%backupfolder%.zip
+    RunLine = 7za.exe a "%BackupPath%\%backupfolder%.zip" "%MCServerPath%\server.log"
     RunWait, %RunLine%,,Hide
   }
   else {
     FileGetVersion, trash, server.log         ;This is necessary to "refresh"
     FileGetSize, OriginalSize, server.log
-    filename = %MCBackupPath%\%backupfolder%\server.log
+    filename = %BackupPath%\%backupfolder%\server.log
     FileCopy, %MCServerPath%\server.log, %filename%
     If (ErrorLevel)
     {

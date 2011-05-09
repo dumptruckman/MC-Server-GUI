@@ -184,12 +184,12 @@ Gui, Add, GroupBox, x10 y30 w300 h70 vFoldersExecutableBox, Folders/Executable
 GuiControlGet, GUIPos, Pos, FoldersExecutableBox
 BoxW := GUIPosW
 ;MC Backup Path field
-Gui, Add, Text, x20 yp+20 Section vMCBackupPathText, MC Backup Path: 
-GuiControlGet, GUIPos, Pos, MCBackupPathText
+Gui, Add, Text, x20 yp+20 Section vBackupPathText, MC Backup Path: 
+GuiControlGet, GUIPos, Pos, BackupPathText
 Temp := BoxW - GUIPosW - 75
-Gui, Add, Edit, ys yp-3 w%Temp% -wrap -multi r1 vMCBackupPath, %MCBackupPath%
-Gui, Add, Button, ys yp-2 gMCBackupPathBrowse, Browse
-MCBackupPath_TT := "Enter the path of the folder you'd like to store backups in"
+Gui, Add, Edit, ys yp-3 w%Temp% -wrap -multi r1 vBackupPath, %BackupPath%
+Gui, Add, Button, ys yp-2 gBackupPathBrowse, Browse
+BackupPath_TT := "Enter the path of the folder you'd like to store backups in"
 ;Java Executable field
 Gui, Add, Text, xs Section vJavaExecutableText, Java Executable: 
 GuiControlGet, GUIPos, Pos, JavaExecutableText
@@ -224,7 +224,7 @@ Gui, Add, CheckBox, xs vAlwaysShowJavaConsole, Always show Java console (Starts 
 GuiControl,, AlwaysShowJavaConsole, %AlwaysShowJavaConsole%
 ;Option to minimize to tray
 Gui, Add, CheckBox, xs vMinimizeToTray, Minimize GUI to System Tray
-GuiControl,, AlwaysMinimizeToTray, %MinimizeToTray%
+GuiControl,, MinimizeToTray, %MinimizeToTray%
 
 /* Not yet ready
 ;NickNames

@@ -106,7 +106,7 @@ StartServer() {
     FileGetTime, filetime, server.log
     FormatTime, foldername, filetime, yyyyMMddHHmmss
     foldername := substr(foldername, 1, 4) . "-" . substr(foldername, 5, 2) . "-" . substr(foldername, 7, 2) . " " . substr(foldername, 9, 2) . "." . substr(foldername, 11, 2) . "." . substr(foldername, 13, 2)
-    FileCreateDir, %MCBackupPath%\%foldername%
+    FileCreateDir, %BackupPath%\%foldername%
     BackupLog(foldername)
     IsBackingUp = 0
   }

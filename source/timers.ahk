@@ -10,6 +10,7 @@ DebugModeTimer:
   ;Debug("RestartCountdown", RestartCountdown)
   ;Debug("ServerState", ServerState)
   Debug("A_LastError", A_LastError)
+  ;Debug("WinActive", WinActive("ahk_id" . GUIHwnd))
 return
 
 

@@ -52,7 +52,6 @@ Gui, Show, Restore, %WindowTitle%
 Menu, Tray, NoIcon
 
 
-
 /*
 ****************
 * AUTO-EXECUTE *
@@ -63,11 +62,9 @@ SetTimer, MainTimer, 250
 SetTimer, NetworkMonitor, 1000
 SetTimer, GetCharKeyPress, 100
 OnExit, GuiClose
+Hotkey, IfWinActive, ahk_pid %GUIPID%
 If (DebugMode()) {
   Debug := Object()
-  ;Debug("MainTimer", "250")
-  ;Debug("NetworkMonitor(Timer)", "1000")
-  ;Debug("GetCharKeyPress(Timer)", "100")
 }
 
 If ((MCServerJar = "Set this") or (MCServerJar = "")) {
@@ -128,22 +125,25 @@ MainProcess() {
       InitiateAutomaticRestart()
     }
 
-    IfWinActive, ahk_pid %GUIPID%
-    {
+    ;IfWinActive, ahk_pid %GUIPID%
+    ;{
       GuiThreadInfoSize = 48
       VarSetCapacity(GuiThreadInfo, GuiThreadInfoSize)
       NumPut(GuiThreadInfoSize, GuiThreadInfo, 0)
       if not DllCall("GetGUIThreadInfo", uint, 0, str, GuiThreadInfo) {
-          ;MsgBox GetGUIThreadInfo() indicated a failure.
           return
       }
       FocusedHWND := NumGet(GuiThreadInfo, 12)  ; Retrieve the hwndFocus field from the struct.
       Global ConsoleBox
       If (FocusedHWND != ConsoleBox) {
-        EoT := RichEdit_GetTextLength(ConsoleBox)
-        RichEdit_SetSel(ConsoleBox, EoT)
+        RichEdit_GetSel(ConsoleBox, selMin, selMax)
+        If ((selMax - selMin) = 0) {
+          EoT := RichEdit_GetTextLength(ConsoleBox)
+          RichEdit_SetSel(ConsoleBox, EoT)
+          RichEdit_LineScroll(ConsoleBox,,2)
+        }
       }
-    }
+    ;}
   }
   else {
     Global ServerState

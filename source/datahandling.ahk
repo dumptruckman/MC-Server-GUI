@@ -42,10 +42,10 @@ InitializeConfig() {
   global
   
   MCServerPath := GetConfigKey("Folders", "ServerPath", GUIPATH)
-  MCBackupPath := GetConfigKey("Folders", "BackupPath", GUIPATH . "\backup")
-  IfNotExist %MCBackupPath% 
+  BackupPath := GetConfigKey("Folders", "BackupPath", GUIPATH . "\backup")
+  IfNotExist %BackupPath% 
   {
-    FileCreateDir, %MCBackupPath%
+    FileCreateDir, %BackupPath%
     If (ErrorLevel) {
       AddText("[GUI] Error creating backup folder.  Please examine path under GUI Config.`n")
     }
@@ -61,7 +61,6 @@ InitializeConfig() {
   ParallelGCThreads := GetConfigKey("ServerArguments", "ParallelGCThreads", "")
   ExtraRunArguments := GetConfigKey("ServerArguments", "Extra", "")
   WindowTitle := GetConfigKey("Names", "GUIWindowTitle", "MC Server GUI")
-  ;UpdateRate := GetConfigKey("Timing", "UpdateRate", "250")
   RestartTimes := GetConfigKey("Timing", "RestartTimes", "")
   WarningTimes := GetConfigKey("Timing", "WarningTimes", "30,15,5")
   RestartDelay := GetConfigKey("Timing", "RestartDelay", "0")
@@ -120,6 +119,17 @@ SetConfigKey(Category, Key, Value) {
   Temp = %A_WorkingDir%
   SetWorkingDir, %GUIPATH%
   IniWrite, %Value%, guiconfig.ini, %Category%, %Key%
+  SetWorkingDir, %TEMP%
+}
+
+
+UpdateConfigKey(Key, Value) {
+  Category := {"BackupPath":"Folders"}
+  Global GUIPATH
+  
+  Temp = %A_WorkingDir%
+  SetWorkingDir, %GUIPATH%
+  IniWrite % Value, "guiconfig.ini", Category[Key], Key
   SetWorkingDir, %TEMP%
 }
 
@@ -192,7 +202,7 @@ WriteServerProps(ByRef ServerProperties) {
 ;Checks to make sure important stuff is in the right place
 VerifyPaths() {
   Global MCServerPath
-  Global MCBackupPath
+  Global BackupPath
   Global WorldBackups
   Global LogBackups
   Global MCServerJar
@@ -200,7 +210,7 @@ VerifyPaths() {
   IfExist, %MCServerPath%\%MCServerJar%
   {
     If ((LogBackups) or (WorldBackups)) {
-      IfExist, %MCBackupPath%
+      IfExist, %BackupPath%
       {
         return 1
       }

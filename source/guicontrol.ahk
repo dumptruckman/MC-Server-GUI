@@ -84,16 +84,12 @@ GUIUpdate() {
   Global
   GuiControlGet, ThisTab,, ThisTab
   If (ThisTab = "Main Window") {
-    ;WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
-    ;Gui, Submit, NoHide
-    ;GuiControl,, WorldBackupsMainWindow, %WorldBackups%
+    
   }
   if (ThisTab = "GUI Config") {
-    ;MCServerPath := GetConfigKey("Folders", "ServerPath") 
-    ;GuiControl,, MCServerPath, %MCServerPath%
-    
-    MCBackupPath := GetConfigKey("Folders", "BackupPath") 
-    GuiControl,, MCBackupPath, %MCBackupPath%
+    /*
+    BackupPath := GetConfigKey("Folders", "BackupPath") 
+    GuiControl,, BackupPath, %BackupPath%
 
     JavaExec := GetConfigKey("Exec", "JavaExec") 
     GuiControl,, JavaExec, %JavaExec%
@@ -104,20 +100,6 @@ GUIUpdate() {
     WindowTitle := GetConfigKey("Names", "GUIWindowTitle") 
     GuiControl,, WindowTitle, %WindowTitle%
 
-    ;UpdateRate := GetConfigKey("Timing", "UpdateRate")
-    ;GuiControl,, UpdateRate, %UpdateRate%
-    
-    /*
-    WorldBackups := GetConfigKey("Backups", "RunWorldBackups")
-    GuiControl,, WorldBackups, %WorldBackups%
-
-    LogBackups := GetConfigKey("Backups", "RunLogBackups")
-    GuiControl,, LogBackups, %LogBackups%
-    
-    ZipBackups := GetConfigKey("Backups", "ZipBackups")
-    GuiControl,, ZipBackups, %ZipBackups%
-    */
-    
     WorldList := ReadWorlds()
     GuiControl,, WorldList, %WorldList%
     
@@ -162,10 +144,11 @@ GUIUpdate() {
     
     MinimizeToTray := GetConfigKey("Other", "MinimizeToTray")
     GuiControl,, MinimizeToTray, %MinimizeToTray%
+    */
   }
   if (ThisTab != "GUI Config") {
-    GuiControlGet, MCBackupPath,, MCBackupPath
-    SetConfigKey("Folders", "BackupPath", MCBackupPath) 
+    GuiControlGet, BackupPath,, BackupPath
+    SetConfigKey("Folders", "BackupPath", BackupPath)
 
     GuiControlGet, JavaExec,, JavaExec
     SetConfigKey("Exec", "JavaExec", JavaExec) 
@@ -175,25 +158,6 @@ GUIUpdate() {
 
     GuiControlGet, WindowTitle,, WindowTitle
     SetConfigKey("Names", "GUIWindowTitle", WindowTitle) 
-
-    ;GuiControlGet, UpdateRate,, UpdateRate
-    ;SetConfigKey("Timing", "UpdateRate", UpdateRate)
-    ;SetTimer, MainTimer, Off
-    ;SetTimer, MainTimer, %UpdateRate%
-    ;If (DebugMode()) {
-      ;Debug("MainTimer", UpdateRate)
-    ;}
-    
-    /*
-    GuiControlGet, WorldBackups,, WorldBackups
-    SetConfigKey("Backups", "RunWorldBackups", WorldBackups)
- 
-    GuiControlGet, LogBackups,, LogBackups
-    SetConfigKey("Backups", "RunLogBackups", LogBackups)
-    
-    GuiControlGet, ZipBackups,, ZipBackups
-    SetConfigKey("Backups", "ZipBackups", ZipBackups)
-    */
     
     GuiControlGet, WorldList,, WorldList
     WriteWorlds(WorldList)
@@ -252,6 +216,7 @@ GUIUpdate() {
   }
   
   If (ThisTab = "Server Config") {
+    /*
     MCServerJar := GetConfigKey("ServerArguments", "ServerJarFile") 
     GuiControl,, MCServerJar, %MCServerJar%
     
@@ -281,6 +246,7 @@ GUIUpdate() {
     
     ServerProperties := ReadServerProps()
     GuiControl,, ServerProperties, %ServerProperties%
+    */
   }
   If (ThisTab != "Server Config") {
     GuiControlGet, MCServerJar,, MCServerJar
@@ -337,7 +303,6 @@ AddText(Text, ByRef Color = "") {
   RichEdit_SetText(ConsoleBox, Text, , -1)
   
   RichEdit_SetSel(ConsoleBox, selMin, selMax)
-  ;RichEdit_LineScroll(ConsoleBox,,2)
   GuiThreadInfoSize = 48
   VarSetCapacity(GuiThreadInfo, GuiThreadInfoSize)
   NumPut(GuiThreadInfoSize, GuiThreadInfo, 0)
@@ -348,7 +313,7 @@ AddText(Text, ByRef Color = "") {
   FocusedHWND := NumGet(GuiThreadInfo, 12)  ; Retrieve the hwndFocus field from the struct.
   Global ConsoleBox
   If (FocusedHWND != ConsoleBox) {
-    RichEdit_LineScroll(ConsoleBox,,2)
+    RichEdit_LineScroll(ConsoleBox,,1)
   }
 }
 
@@ -396,6 +361,47 @@ WM_MOUSEMOVE() {
   RemoveToolTip:
     SetTimer, RemoveToolTip, Off
     ToolTip
+  return
+}
+
+
+
+/*
+************
+* Hot Keys *
+************
+*/
+/*
+#if (WinActive("ahk_pid" . GUIPID))
+{
+  Enter::
+    ControlGetFocus, Focused, ahk_pid %GUIPID%
+    if (ErrorLevel)
+    {
+      Debug("Can't get focus", 1)
+    }
+    Debug("Focused", Focused)
+    GuiControlGet, FocusedValue,, Focused
+    %Focused% = %FocusedValue%
+    UpdateConfigKey(Focused, FocusedValue)
+    ;GuiControlGet, BackupPath,, BackupPath
+    ;SetConfigKey("Folders", "BackupPath", BackupPath)
+  return
+}
+*/
+
+
+
+#if (WinActive("ahk_pid" . GUIPID))
+{
+  ^s::
+    GuiControlGet, SayOn,, SayToggle
+    if (SayOn) {
+      GuiControl, , SayToggle, 0
+    }
+    else {
+      GuiControl, , SayToggle, 1
+    }
   return
 }
 
@@ -502,9 +508,9 @@ JavaToggle:
 return
 
 
-MCBackupPathBrowse:
-  FileSelectFolder, MCBackupPath, %A_ComputerName%, 3, Please select where you would like your backups stored
-  GuiControl,, MCBackupPath, %MCBackupPath%
+BackupPathBrowse:
+  FileSelectFolder, BackupPath, %A_ComputerName%, 3, Please select where you would like your backups stored
+  GuiControl,, BackupPath, %BackupPath%
 return
 
 
