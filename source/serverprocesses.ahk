@@ -13,7 +13,10 @@ BuildRunLine() {
   Global ParallelGCThreads
   Global ExtraRunArguments
   
-  ServerArgs := "-Xmx" . ServerXmx . " -Xms" . ServerXms
+  ServerArgs := "-Xmx" . ServerXmx
+  If (Xincgc) {
+    ServerArgs := ServerArgs . " -Xincgc"
+  }
   If (UseConcMarkSweepGC) {
     ServerArgs := ServerArgs . " -XX:+UseConcMarkSweepGC"
   }

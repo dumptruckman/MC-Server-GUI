@@ -1,3 +1,6 @@
+Versuib .6.10
+  Removed Xms memory field and replaced with Xincgc checkbox.  You can still use Xms if you'd like, you just have to add it in the extra arguments box.
+
 Version .6.9-dev
   Alt-Tab works more reliably while looking at the GUI
   Added ctrl-s hotkey for "say" mode

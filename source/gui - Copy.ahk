@@ -3,7 +3,8 @@
 * GUI SETUP *
 *************
 */
-Gui, Add, Tab2, w500 buttons gGUIUpdate vThisTab, Main Window||Server Config|GUI Config ;|Plugin Config
+Gui, Add, Tab, , Main Window
+/*
 Gui, Margin, 5, 5
 ;Gui, +Resize +MinSize
 
@@ -14,8 +15,8 @@ Gui, Tab, Main Window
 ;Picture control contains RichEdit control for the "Console Box"
 Gui, Add, GroupBox, x10 y30 w700 h275 Section vConsoleOutput, Console Output
 Gui, Add, Picture, xp+10 yp+15 w680 h250 vConsoleBox HwndREparent1
-ConsoleBox := RichEdit_Add(REParent1, 0, 0, 680, 250, "READONLY VSCROLL MULTILINE")
-RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
+;ConsoleBox := RichEdit_Add(REParent1, 0, 0, 680, 250, "READONLY VSCROLL MULTILINE")
+;RichEdit_SetBgColor(ConsoleBox, "0x" . BGColor)
 
 ;Player List
 Gui, Add, GroupBox, ys Section w200 h275 vPlayerListBox, Player List
@@ -146,14 +147,11 @@ Gui, Add, Edit, ys yp-3 w145 -wrap -multi r1 vMCServerJar, %MCServerJar%
 Gui, Add, Button, ys yp-2 gMCServerJarBrowse, Browse
 MCServerJar_TT := "Put the name of your server Jar file here.  Example: craftbukkit.jar"
 ;Xms memory field
-;Gui, Add, Text, xs Section, Xms Memory: 
-;Gui, Add, Edit, ys yp-3 w60 -wrap -multi vServerXms, %ServerXms%
+Gui, Add, Text, xs Section, Xms Memory: 
+Gui, Add, Edit, ys yp-3 w60 -wrap -multi vServerXms, %ServerXms%
 ;Xmx memory field
-Gui, Add, Text, xs Section, Xmx Memory: 
+Gui, Add, Text, ys, Xmx Memory: 
 Gui, Add, Edit, ys yp-3 w60 -wrap -multi vServerXmx, %ServerXmx%
-;Xincgc field
-Gui, Add, Checkbox, xs Section vXincgc, Xincgc
-GuiControl,, Xincgc, %Xincgc%
 ;Checkboxes for various arguments
 Gui, Add, CheckBox, xs vUseConcMarkSweepGC, -XX:+UseConcMarkSweepGC
 GuiControl,, UseConcMarkSweepGC, %UseConcMarkSweepGC%
@@ -187,12 +185,12 @@ Gui, Add, GroupBox, x10 y30 w300 h70 vFoldersExecutableBox, Folders/Executable
 GuiControlGet, GUIPos, Pos, FoldersExecutableBox
 BoxW := GUIPosW
 ;MC Backup Path field
-Gui, Add, Text, x20 yp+20 Section vBackupPathText, MC Backup Path: 
-GuiControlGet, GUIPos, Pos, BackupPathText
+Gui, Add, Text, x20 yp+20 Section vMCBackupPathText, MC Backup Path: 
+GuiControlGet, GUIPos, Pos, MCBackupPathText
 Temp := BoxW - GUIPosW - 75
-Gui, Add, Edit, ys yp-3 w%Temp% -wrap -multi r1 vBackupPath, %BackupPath%
-Gui, Add, Button, ys yp-2 gBackupPathBrowse, Browse
-BackupPath_TT := "Enter the path of the folder you'd like to store backups in"
+Gui, Add, Edit, ys yp-3 w%Temp% -wrap -multi r1 vMCBackupPath, %MCBackupPath%
+Gui, Add, Button, ys yp-2 gMCBackupPathBrowse, Browse
+MCBackupPath_TT := "Enter the path of the folder you'd like to store backups in"
 ;Java Executable field
 Gui, Add, Text, xs Section vJavaExecutableText, Java Executable: 
 GuiControlGet, GUIPos, Pos, JavaExecutableText
@@ -227,9 +225,9 @@ Gui, Add, CheckBox, xs vAlwaysShowJavaConsole, Always show Java console (Starts 
 GuiControl,, AlwaysShowJavaConsole, %AlwaysShowJavaConsole%
 ;Option to minimize to tray
 Gui, Add, CheckBox, xs vMinimizeToTray, Minimize GUI to System Tray
-GuiControl,, MinimizeToTray, %MinimizeToTray%
+GuiControl,, AlwaysMinimizeToTray, %MinimizeToTray%
 
-/* Not yet ready
+ Not yet ready
 ;NickNames
 GuiControlGet, GUIPos, Pos, MiscellaneousBox
 GUIPosY := GUIPosY + GUIPosH + 5
@@ -239,7 +237,7 @@ BoxW := GUIPosW
 Gui, Add, Text, xp+10 yp+15 Section, If anyone ever shows up in your /list with a name other than`nthe name they log in with, please specify it here.  The format`nis as follows: LoginName=NickName`nSeperate multiple entries with commas (and no spaces)
 Temp := BoxW - 20
 Gui, Add, Edit, xs w%Temp% vNickNames
-*/
+
 
 ;Info
 Gui, Add, Text, xm y430 cRed, Once changes are complete, simply click on another tab to save..
@@ -305,7 +303,6 @@ Gui, Add, Text, x624 yp+25, [SEVERE] Color:
 Gui, Add, Edit, xp+80 yp-3 vSEVEREColor, % TagColors["SEVERE"]
 
 
-/*
 ;FOURTH TAB - PLUGIN CONFIG
 Gui, Tab, Plugin Config
 Gui, Add, GroupBox, x10 y30 w200 vMCSignOnDoorBox, MC Sign On Door
@@ -318,7 +315,6 @@ Temp := BoxW - GUIPosW - 75
 Gui, Add, Edit, ys yp-3 w%Temp% -wrap -multi r1 vMCSoDJar, %MCSoDJar%
 Gui, Add, Button, ys yp-2 gMCSoDJarBrowse, Browse
 MCSoDJar_TT := "Please select the .jar file for MC Sign On Door"
-*/
 
 
 ;System Tray Menu
@@ -326,3 +322,5 @@ Menu, Tray, NoStandard
 Menu, Tray, Add, Exit, GuiClose
 Menu, Tray, Add, Restore, Restore
 Menu, Tray, Default, Restore
+*/
+Gui, Show, Poop

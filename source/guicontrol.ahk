@@ -87,7 +87,6 @@ GUIUpdate() {
     
   }
   if (ThisTab = "GUI Config") {
-    /*
     BackupPath := GetConfigKey("Folders", "BackupPath") 
     GuiControl,, BackupPath, %BackupPath%
 
@@ -144,7 +143,6 @@ GUIUpdate() {
     
     MinimizeToTray := GetConfigKey("Other", "MinimizeToTray")
     GuiControl,, MinimizeToTray, %MinimizeToTray%
-    */
   }
   if (ThisTab != "GUI Config") {
     GuiControlGet, BackupPath,, BackupPath
@@ -216,15 +214,17 @@ GUIUpdate() {
   }
   
   If (ThisTab = "Server Config") {
-    /*
     MCServerJar := GetConfigKey("ServerArguments", "ServerJarFile") 
     GuiControl,, MCServerJar, %MCServerJar%
     
     ServerXmx := GetConfigKey("ServerArguments", "Xmx") 
     GuiControl,, ServerXmx, %ServerXmx%
     
-    ServerXms := GetConfigKey("ServerArguments", "Xms") 
-    GuiControl,, ServerXms, %ServerXms%
+    ;ServerXms := GetConfigKey("ServerArguments", "Xms") 
+    ;GuiControl,, ServerXms, %ServerXms%
+    
+    Xincgc := GetConfigKey("ServerArguments", "Xincgc") 
+    GuiControl,, Xincgc, %Xincgc%
     
     UseConcMarkSweepGC := GetConfigKey("ServerArguments", "UseConcMarkSweepGC")
     GuiControl,, UseConcMarkSweepGC, %UseConcMarkSweepGC%
@@ -246,7 +246,6 @@ GUIUpdate() {
     
     ServerProperties := ReadServerProps()
     GuiControl,, ServerProperties, %ServerProperties%
-    */
   }
   If (ThisTab != "Server Config") {
     GuiControlGet, MCServerJar,, MCServerJar
@@ -256,8 +255,11 @@ GUIUpdate() {
     GuiControlGet, ServerXmx,, ServerXmx
     SetConfigKey("ServerArguments", "Xmx", ServerXmx)
     
-    GuiControlGet, ServerXms,, ServerXms
-    SetConfigKey("ServerArguments", "Xms", ServerXms)
+    ;GuiControlGet, ServerXms,, ServerXms
+    ;SetConfigKey("ServerArguments", "Xms", ServerXms)
+    
+    GuiControlGet, Xincgc,, Xincgc
+    SetConfigKey("ServerArguments", "Xincgc", Xincgc)
     
     GuiControlGet, UseConcMarkSweepGC,, UseConcMarkSweepGC
     SetConfigKey("ServerArguments", "UseConcMarkSweepGC", UseConcMarkSweepGC)
